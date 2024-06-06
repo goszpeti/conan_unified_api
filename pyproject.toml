@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conan-unified-api"
+authors = [{name = "Péter Gosztolya and Contributors"}]
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Compatibility layer for Conan 1 and 2 for Python 3.10+"
+readme = "README.md"
+keywords = ["conan", "api"]
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython"]
+dependencies = [
+    "conan>=1.48, <2.2",
+    'typing-extensions>=3.10.0.2, <5',  # Python Software Foundation License(PSF)
+    "packaging",  # use the built-in, or get latest if there is some issue with pip
+]
+
+[project.urls]
+repository = "https://github.com/goszpeti/conan_unified_api.git"
+issues = "https://github.com/goszpeti/conan_unified_api/issues"
+
+[project.optional-dependencies]
+dev = [
+    "rope", # refactoring
+    "debugpy", # Qt thread debugging
+    ]
+test = [
+    "pytest==8.1.1",
+    "pytest-cov==4.1.0",
+    "pytest-mock==3.12.0",
+    "pytest-check==2.3.1",
+]
+
+# [tool.setuptools.package-data]
+# "conan_explorer" = ["**/*.pyi"]
+
+[tool.ruff]
+line-length=88
+target-version = "py38"
+
+[tool.autopep8]
+max_line_length = 88

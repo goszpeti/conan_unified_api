@@ -1,0 +1,25 @@
+{
+    "read_only": true,
+    "local_packages": {
+        "my_package/1.0.0@user/channel": "",
+        "my_package/2.0.0@user/channel": "C:\\.conan\\pkg"
+    },
+    "remote_packages": {
+        "my_package": {
+            "user": [
+                "1.0.0/channel",
+                "2.0.0/channel"
+            ]
+        },
+        "other_package": {
+            "others": [
+                "1.0.0/testing",
+                "2.0.0/stable",
+                "3.0.0/stable"
+            ],
+            "local": [
+                "1.0.0/testing"
+            ]
+        }
+    }
+}
