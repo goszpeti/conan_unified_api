@@ -5,7 +5,7 @@ from tempfile import gettempdir
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 from unittest.mock import patch
 
-from conan_unified_api import INVALID_PATH, user_save_path, conan_version, Version
+from conan_unified_api import INVALID_PATH, conan_version, Version
 from conan_unified_api.logger import Logger
 from conan_unified_api.typing import SignatureCheckMeta
 
@@ -13,6 +13,8 @@ from .types import (ConanAvailableOptions, ConanException, ConanOptions, ConanPa
     ConanPackagePath, ConanPkg, ConanPkgRef, ConanRef, ConanSettings, EditablePkg, Remote,
     create_key_value_pair_list)
 from .unified_api import ConanCommonUnifiedApi
+
+current_path = Path(__file__).parent
 
 if TYPE_CHECKING:
     from conan.api.conan_api import ConanAPI # type: ignore
@@ -42,7 +44,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             self._client_cache = ClientCache(self._conan.cache_folder, self._conan.config.global_conf)
             from conan.internal.cache.home_paths import HomePaths
             self._home_paths = HomePaths(self._conan.cache_folder)
-        self.info_cache = ConanInfoCache(user_save_path, self.get_all_local_refs())
+        self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
         Logger().debug("Initialized Conan V2 API wrapper")
         return self
 

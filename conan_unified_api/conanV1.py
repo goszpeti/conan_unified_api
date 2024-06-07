@@ -6,8 +6,8 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from unittest.mock import patch
-from conan_unified_api.app.system import delete_path
-from conan_unified_api.app.typing import SignatureCheckMeta
+from conan_unified_api.system import delete_path
+from conan_unified_api.typing import SignatureCheckMeta
 
 try:
     from contextlib import chdir
@@ -23,10 +23,10 @@ if TYPE_CHECKING:
     from .conan_cache import ConanInfoCache
     from conans.client.conan_api import ClientCache, ConanAPIV1
 
-from conan_unified_api import (CONAN_LOG_PREFIX, INVALID_PATH,
-                                SEARCH_APP_VERSIONS_IN_LOCAL_CACHE, user_save_path)
+from conan_unified_api import (CONAN_LOG_PREFIX, INVALID_PATH, SEARCH_APP_VERSIONS_IN_LOCAL_CACHE)
 from conan_unified_api.app.logger import Logger
 
+current_path = Path(__file__).parent
 
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     """ Wrapper around ConanAPIV1 """
@@ -65,7 +65,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         except Exception as e:
             Logger().debug(str(e))
         from .conan_cache import ConanInfoCache
-        self.info_cache = ConanInfoCache(user_save_path, self.get_all_local_refs())
+        self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
         Logger().debug("Initialized Conan V1 API wrapper")
 
         return self
