@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython"]
 dependencies = [
-    "conan>=1.48, <2.2",
+    "conan>=1.48, <2.5",
     'typing-extensions>=3.10.0.2, <5',  # Python Software Foundation License(PSF)
     "packaging",  # use the built-in, or get latest if there is some issue with pip
 ]
