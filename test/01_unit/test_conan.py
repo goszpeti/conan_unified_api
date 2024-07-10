@@ -1,18 +1,14 @@
 import os
 import platform
 import tempfile
-import time
 from pathlib import Path
 
 import pytest
 from test.conftest import TEST_REF, conan_install_ref, conan_remove_ref
-from typing import List
 
-from conan_unified_api.conan_wrapper import ConanApiFactory as ConanApi
-from conan_unified_api.conan_wrapper.types import create_key_value_pair_list
-from conan_unified_api.conan_wrapper.conan_worker import ConanWorker, ConanWorkerElement
-from conan_unified_api.conan_wrapper.conan_cleanup import ConanCleanup
-from conan_unified_api.conan_wrapper.types import ConanRef
+from conan_unified_api import ConanApiFactory as ConanApi
+from conan_unified_api.types import create_key_value_pair_list
+from conan_unified_api.types import ConanRef
 
 @pytest.mark.conanv1
 def test_conan_get_conan_buildinfo():
@@ -62,19 +58,6 @@ def test_conan_short_path_root():
         assert conan.get_short_path_root() == new_short_home
     else:
         assert not conan.get_short_path_root().exists()
-    os.environ.pop("CONAN_USER_HOME_SHORT")
-
-
-def test_empty_cleanup_cache(base_fixture):
-    """
-    Test, if a clean cache returns no dirs. Actual functionality is tested with gui.
-    It is assumed, that the cash is clean, like it would be on the CI.
-    """
-    os.environ["CONAN_USER_HOME"] = str(Path(tempfile.gettempdir()) / "._myconan_home")
-    os.environ["CONAN_USER_HOME_SHORT"] = str(Path(tempfile.gettempdir()) / "._myconan_short")
-    paths = ConanCleanup(ConanApi().init_api()).get_cleanup_cache_paths()
-    assert not paths
-    os.environ.pop("CONAN_USER_HOME")
     os.environ.pop("CONAN_USER_HOME_SHORT")
 
 @pytest.mark.conanv2
@@ -236,30 +219,3 @@ def test_search_for_all_packages(base_fixture):
     res = conan.search_recipe_all_versions_in_remotes(ConanRef.loads(TEST_REF))
     ref = ConanRef.loads(TEST_REF)  # need to convert @_/_
     assert str(ref) in str(res)
-
-@pytest.mark.conanv2
-def test_conan_worker(base_fixture, mocker):
-    """
-    Test, if conan worker works on the queue.
-    It is expected,that the queue size decreases over time.
-    """
-    conan_refs: List[ConanWorkerElement] = \
-    [{"ref_pkg_id": "m4/1.4.19@_/_", "options": {},
-    "settings": {}, "update": False,  "auto_install": True, "profile": ""},
-    {"ref_pkg_id": "zlib/1.2.11@conan/stable", "options": {"shared": "True"},
-        "settings": {}, "update": False,  "auto_install": True, "profile": ""}
-    ]
-
-    mock_func = mocker.patch(
-        f'{type(ConanApi()).__module__}.{type(ConanApi()).__name__}.get_path_or_auto_install')
-    import conan_unified_api.app as app
-
-    conan_worker = ConanWorker(ConanApi().init_api(), app.active_settings)
-    conan_worker.update_all_info(conan_refs, None)
-    time.sleep(3)
-    conan_worker.finish_working()
-
-    mock_func.assert_called()
-
-    assert conan_worker._conan_install_queue.qsize() == 0
-

@@ -3,9 +3,6 @@
 import inspect
 from types import FunctionType
 
-from conan_unified_api import DEBUG_LEVEL
-
-
 class SignatureMismatchException(Exception):
     pass
 
@@ -16,6 +13,7 @@ class SignatureCheckMeta(type):
         For each method, check if any base class already defined a
         method with that name. If so, make sure the signatures are the same. 
         """
+        from .helper import DEBUG_LEVEL
         if DEBUG_LEVEL < 1:
             return type(name, base_classes, methods)
         for method_name in methods:

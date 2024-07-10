@@ -1,13 +1,13 @@
 import logging
 from typing import TYPE_CHECKING, Optional
+
 if TYPE_CHECKING:
     from typing import Self
 
-from conan_unified_api import DEBUG_LEVEL, PKG_NAME
 
 class Logger(logging.Logger):
     """
-    Singleton instance for the global dual logger (Qt Widget/console)
+    Singleton instance for the global logger
     """
     _instance: Optional[logging.Logger] = None
     formatter = logging.Formatter(r"%(levelname)s: %(message)s")
@@ -28,6 +28,9 @@ class Logger(logging.Logger):
         root = logging.getLogger()
         root.setLevel(logging.ERROR)
 
+        from conan_unified_api import PKG_NAME
+        from conan_unified_api.helper import DEBUG_LEVEL
+
         logger = logging.getLogger(PKG_NAME)
         logger.setLevel(logging.DEBUG)
         log_debug_level = logging.INFO
@@ -43,5 +46,4 @@ class Logger(logging.Logger):
 
         # otherwise messages appear twice
         logger.propagate = False
-
         return logger

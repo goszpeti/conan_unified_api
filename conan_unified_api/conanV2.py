@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from tempfile import gettempdir
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing_extensions import Self
 from unittest.mock import patch
 
 from conan_unified_api import INVALID_PATH, conan_version, Version
@@ -32,7 +33,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self._short_path_root = Path("Unknown")
         self._home_paths: "HomePaths"
 
-    def init_api(self):
+    def init_api(self) -> Self:
         from conan.api.conan_api import ConanAPI
         from conans.client.cache.cache import ClientCache
 

@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
-from conan_unified_api import INVALID_CONAN_REF, INVALID_PATH, conan_version
+from conan_unified_api.helper import INVALID_CONAN_REF, INVALID_PATH, conan_version
 from conan_unified_api.logger import Logger
 from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef, 
             ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from conan_unified_api.conan_cache import ConanInfoCache
@@ -21,7 +22,7 @@ class ConanUnifiedApi():
         ...
 
     @abstractmethod
-    def init_api(self):
+    def init_api(self) -> Self:
         """ Instantiate the internal Conan api. """
         raise NotImplementedError
 

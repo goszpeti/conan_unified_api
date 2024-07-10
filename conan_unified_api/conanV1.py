@@ -1,3 +1,4 @@
+import logging
 import os
 import platform
 
@@ -5,8 +6,9 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from tempfile import gettempdir
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing_extensions import Self
 from unittest.mock import patch
-from conan_unified_api.system import delete_path
+from conan_unified_api.helper import delete_path, save_sys_path
 from conan_unified_api.typing import SignatureCheckMeta
 
 try:
@@ -14,6 +16,7 @@ try:
 except ImportError:
     from contextlib_chdir import chdir # type: ignore
 
+from .logger import Logger
 from .types import (ConanAvailableOptions, ConanOptions, ConanPackageId, ConanPackagePath, 
                     ConanPkg, ConanRef, ConanPkgRef, ConanException, ConanSettings, EditablePkg, 
                     LoggerWriter, Remote, create_key_value_pair_list)
@@ -23,21 +26,30 @@ if TYPE_CHECKING:
     from .conan_cache import ConanInfoCache
     from conans.client.conan_api import ClientCache, ConanAPIV1
 
-from conan_unified_api import (CONAN_LOG_PREFIX, INVALID_PATH, SEARCH_APP_VERSIONS_IN_LOCAL_CACHE)
-from conan_unified_api.app.logger import Logger
+from conan_unified_api.helper import (CONAN_LOG_PREFIX, INVALID_PATH)
 
 current_path = Path(__file__).parent
 
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     """ Wrapper around ConanAPIV1 """
 
-    def __init__(self):
+    def __init__(self, init=True, logger:Optional[logging.Logger]=None, quiet=False):
         self._conan: "ConanAPIV1"
-        self.info_cache: "ConanInfoCache"
         self._client_cache: "ClientCache"
         self._short_path_root = Path("Unknown")
+        self.info_cache: "ConanInfoCache"
 
-    def init_api(self):
+        if logger is None:
+            self.logger = Logger()
+        else:
+            self.logger = logger
+        if quiet:
+            self.logger.disabled = True
+
+        if init:
+            self.init_api()
+
+    def init_api(self) -> Self:
         """ Instantiate the internal Conan api. """
         from conans.client.conan_api import (ConanAPIV1, UserIO)
         from conans.client.output import ConanOutput
@@ -45,9 +57,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self._fix_editable_file()
 
         self._conan = ConanAPIV1(output=ConanOutput(LoggerWriter(
-            Logger().info, CONAN_LOG_PREFIX), LoggerWriter(Logger().error, CONAN_LOG_PREFIX)))
+            self.logger.info, CONAN_LOG_PREFIX), LoggerWriter(self.logger.error, CONAN_LOG_PREFIX)))
         self._conan.user_io = UserIO(out=ConanOutput(LoggerWriter(
-            Logger().info, CONAN_LOG_PREFIX), LoggerWriter(Logger().error, CONAN_LOG_PREFIX)))
+            self.logger.info, CONAN_LOG_PREFIX), LoggerWriter(self.logger.error, CONAN_LOG_PREFIX)))
         self._conan.create_app()
         self._conan.user_io.disable_input()  # error on inputs - nowhere to enter
         if self._conan.app:
@@ -63,10 +75,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:  # use try-except because of Conan 1.24 envvar errors in tests
             self.remove_locks()
         except Exception as e:
-            Logger().debug(str(e))
+            self.logger.debug(str(e))
         from .conan_cache import ConanInfoCache
         self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
-        Logger().debug("Initialized Conan V1 API wrapper")
+        self.logger.debug("Initialized Conan V1 API wrapper")
 
         return self
     
@@ -84,13 +96,21 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             if not content:
                 editable_file_path.write_text("{}")
         except Exception:
-            Logger().debug("Reinit editable file package")
+            self.logger.debug("Reinit editable file package")
 
     ### General commands ###if 
 
     def remove_locks(self):
         self._conan.remove_locks()
-        Logger().info("Removed Conan cache locks.")
+        self.logger.info("Removed Conan cache locks.")
+
+    def info(self, conan_ref: Union[ConanRef, str]) -> Dict[str, Any]:
+        with save_sys_path():
+            self._conan.info(str(conan_ref))
+
+    def inspect(self, conan_ref: Union[ConanRef, str]):
+        with save_sys_path():
+            self._conan.inspect(str(conan_ref))
 
     def get_profiles(self) -> List[str]:
         return self._conan.profile_list()
@@ -114,14 +134,14 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             user_info = self._conan.users_list(remote_name).get("remotes", {})
         except Exception:
-            Logger().error(f"Cannot find remote {remote_name} in remote list for fetching user.")
+            self.logger.error(f"Cannot find remote {remote_name} in remote list for fetching user.")
         if len(user_info) < 1:
             return ("", False)
         try:
             return (str(user_info[0].get("user_name", "")),
                     user_info[0].get("authenticated", False))
         except Exception:
-            Logger().warning(f"Can't get user info for {remote_name}")
+            self.logger.warning(f"Can't get user info for {remote_name}")
             return ("", False)
 
     def get_config_file_path(self) -> Path:
@@ -178,7 +198,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             self._conan.editable_add(path, str(conan_ref), None, output_folder, None)
         except Exception as e:
-            Logger().error("Error adding editable: " + str(e))
+            self.logger.error("Error adding editable: " + str(e))
             return False
         return True
 
@@ -186,7 +206,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             self._conan.editable_remove(str(conan_ref))
         except Exception as e:
-            Logger().error("Error removing editable: " + str(e))
+            self.logger.error("Error removing editable: " + str(e))
             return False
         return True
 
@@ -225,7 +245,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             if layout:
                 return Path(layout.conanfile())
         except Exception as e:
-            Logger().error(f"Can't get conanfile: {str(e)}")
+            self.logger.error(f"Can't get conanfile: {str(e)}")
         return Path(INVALID_PATH)
 
     # Remotes
@@ -238,7 +258,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             else:
                 remotes = self._client_cache.registry.load_remotes().values()
         except Exception as e:
-            Logger().error(f"Error while reading remotes file: {str(e)}")
+            self.logger.error(f"Error while reading remotes file: {str(e)}")
         return remotes # type: ignore
 
     def add_remote(self, remote_name: str, url: str, verify_ssl: bool):
@@ -277,7 +297,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             install_message = f"Installing '<b>{str(conan_ref)}</b>' with profile: {profile}, " \
                 f"settings: {str(settings_list)}, " \
                 f"options: {str(options_list)} and update={update}\n"
-            Logger().info(install_message)
+            self.logger.info(install_message)
         profile_names = None
         if profile:
             profile_names = [profile]
@@ -299,14 +319,14 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             if not infos.get("error", True):
                 package_id = infos.get("installed", [{}])[0].get(
                                                     "packages", [{}])[0].get("id", "")
-            Logger().info(
+            self.logger.info(
                 f"Installation of '<b>{str(conan_ref)}</b>' finished")
             # Update cache with this package
             package_path = self.get_package_folder(conan_ref, package_id)
             self.info_cache.update_local_package_path(conan_ref, package_path)
             return package_id, package_path
         except ConanException as error:
-            Logger().error(
+            self.logger.error(
                 f"Can't install reference '<b>{str(conan_ref)}</b>': {str(error)}")
             return package_id, Path(INVALID_PATH)
 
@@ -327,7 +347,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             content = generated_file.read_text()
         except Exception as e:
-            Logger().error(
+            self.logger.error(
                 f"Can't read conanbuildinfo.txt for '<b>{str(conan_ref)}</b>': {str(e)}")
         return content
 
@@ -348,7 +368,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 opts = recipe.options._data[option]._possible_values
                 available_options.update({option: opts})
         except Exception as e:
-            Logger().debug(
+            self.logger.debug(
                 f"Error while getting default options for {str(conan_ref)}: {str(e)}")
         return available_options, default_options
 
@@ -368,14 +388,14 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             response = self.search_packages(
                 self._conan, self.generate_canonical_ref(conan_ref))
         except Exception as error:
-            Logger().debug(f"{str(error)}")
+            self.logger.debug(f"{str(error)}")
             return result
         if not response.get("error", True):
             try:
                 result = response.get("results", [{}])[0].get(
                     "items", [{}])[0].get("packages", [{}])
             except Exception:
-                Logger().error(
+                self.logger.error(
                     f"Received invalid package response format for {str(conan_ref)}")
         return result
 
@@ -389,7 +409,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             remote_results = self._conan.search_recipes(
                 query, remote_name=remote_name, case_sensitive=False).get("results", None)
         except Exception as e:
-            Logger().error(f"Error while searching for recipe: {str(e)}")
+            self.logger.error(f"Error while searching for recipe: {str(e)}")
             return []
         if not remote_results:
             return res_list
@@ -411,14 +431,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             remote_results = self._conan.search_recipes(
                 f"{conan_ref.name}/*@*/*", remote_name="all").get("results", None)
         except Exception as e:
-            Logger().warning(str(e))
-        try:
-            if SEARCH_APP_VERSIONS_IN_LOCAL_CACHE:
-                local_results = self._conan.search_recipes(
-                    f"{conan_ref.name}/*@*/*", remote_name=None).get("results", None)
-        except Exception as e:
-            Logger().warning(str(e))
-            return []
+            self.logger.warning(str(e))
 
         res_list: List[ConanRef] = []
         for remote_search_res in local_results + remote_results:
@@ -439,7 +452,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 conan_ref.full_str(), query=query, remote_name=remote).get("results", None)
             if search_results:
                 found_pkgs = search_results[0].get("items")[0].get("packages")
-            Logger().debug(str(found_pkgs))
+            self.logger.debug(str(found_pkgs))
         except ConanException:  # no problem, next
             return []
         return found_pkgs

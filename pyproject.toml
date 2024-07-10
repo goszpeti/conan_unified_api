@@ -27,9 +27,9 @@ issues = "https://github.com/goszpeti/conan_unified_api/issues"
 [project.optional-dependencies]
 dev = [
     "rope", # refactoring
-    "debugpy", # Qt thread debugging
     ]
 test = [
+    "psutil==5.9.8",
     "pytest==8.1.1",
     "pytest-cov==4.1.0",
     "pytest-mock==3.12.0",
@@ -45,3 +45,13 @@ target-version = "py38"
 
 [tool.autopep8]
 max_line_length = 88
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "test",
+]
+markers = [
+    "conanv1: mark as working with conan 1.x installed",
+    "conanv2: mark as working with conan 2.x installed"
+]
