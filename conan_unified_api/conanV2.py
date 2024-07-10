@@ -41,7 +41,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self.init_client_cache()
 
         from .cache.conan_cache import ConanInfoCache
-        self.info_cache = ConanInfoCache(user_save_path, self.get_all_local_refs())
+        self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
         self.logger.debug("Initialized Conan V2 API wrapper")
         return self
 
