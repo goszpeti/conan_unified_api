@@ -1,4 +1,5 @@
 from contextlib import redirect_stderr, redirect_stdout
+import logging
 import os
 from pathlib import Path
 from tempfile import gettempdir
@@ -25,12 +26,13 @@ if TYPE_CHECKING:
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     """ Wrapper around ConanAPIV2 """
 
-    def __init__(self):
+    def __init__(self, init=True, logger: Optional[logging.Logger] = None, quiet=False):
         self.info_cache: "ConanInfoCache"
         self._conan: "ConanAPI"
         self._client_cache: "ClientCache"
         self._short_path_root = Path("Unknown")
         self._home_paths: "HomePaths"
+        super().__init__(init, logger, quiet)
 
     def init_api(self) -> Self:
         from conan.api.conan_api import ConanAPI

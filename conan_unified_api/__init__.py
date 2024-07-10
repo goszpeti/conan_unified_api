@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .base import conan_version
 from .cache.conan_cache import ConanInfoCache
-from .unified_api import ConanCommonUnifiedApi
+from .unified_api import ConanUnifiedApi
 
 PKG_NAME = "conan_unified_api"
 __version__ = distribution(PKG_NAME)
@@ -16,7 +16,8 @@ __version__ = distribution(PKG_NAME)
 
 base_path = Path(__file__).absolute().parent
 
-def ConanApiFactory() -> ConanCommonUnifiedApi:
+
+def ConanApiFactory() -> ConanUnifiedApi:
     """ Instantiate ConanApi in the correct version """
     if conan_version.major == 1:
         from conan_unified_api.conanV1 import ConanApi

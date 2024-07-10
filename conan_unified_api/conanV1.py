@@ -39,16 +39,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self._client_cache: "ClientCache"
         self._short_path_root = Path("Unknown")
         self.info_cache: "ConanInfoCache"
-
-        if logger is None:
-            self.logger = Logger()
-        else:
-            self.logger = logger
-        if quiet:
-            self.logger.disabled = True
-
-        if init:
-            self.init_api()
+        super().__init__(init, logger, quiet)
 
     def init_api(self) -> Self:
         """ Instantiate the internal Conan api. """
