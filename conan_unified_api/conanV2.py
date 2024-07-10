@@ -1,50 +1,62 @@
 from contextlib import redirect_stderr, redirect_stdout
+import logging
 import os
 from pathlib import Path
 from tempfile import gettempdir
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing_extensions import Self
 from unittest.mock import patch
 
-from conan_unified_api import INVALID_PATH, user_save_path, conan_version, Version
-from conan_unified_api.logger import Logger
-from conan_unified_api.typing import SignatureCheckMeta
-
+from .base import INVALID_PATH, conan_version, Version
+from .base.logger import Logger
+from .base.helper import create_key_value_pair_list
+from .base.typing import SignatureCheckMeta
 from .types import (ConanAvailableOptions, ConanException, ConanOptions, ConanPackageId,
-    ConanPackagePath, ConanPkg, ConanPkgRef, ConanRef, ConanSettings, EditablePkg, Remote,
-    create_key_value_pair_list)
-from .unified_api import ConanCommonUnifiedApi
+    ConanPackagePath, ConanPkg, ConanPkgRef, ConanRef, ConanSettings, EditablePkg, Remote)
+from .common import ConanCommonUnifiedApi
+
+current_path = Path(__file__).parent
 
 if TYPE_CHECKING:
     from conan.api.conan_api import ConanAPI # type: ignore
     from conans.client.cache.cache import ClientCache
-    from .conan_cache import ConanInfoCache
+    from .cache.conan_cache import ConanInfoCache
     from conan.internal.cache.home_paths import HomePaths  # type: ignore
 
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     """ Wrapper around ConanAPIV2 """
 
-    def __init__(self):
+    def __init__(self, init=True, logger: Optional[logging.Logger] = None, quiet=False):
         self.info_cache: "ConanInfoCache"
         self._conan: "ConanAPI"
         self._client_cache: "ClientCache"
         self._short_path_root = Path("Unknown")
         self._home_paths: "HomePaths"
+        super().__init__(init, logger, quiet)
 
-    def init_api(self):
+    def init_api(self) -> Self:
         from conan.api.conan_api import ConanAPI
-        from conans.client.cache.cache import ClientCache
-
-        from .conan_cache import ConanInfoCache
         self._conan = ConanAPI()
-        if conan_version < Version("2.0.14"):
-            self._client_cache = ClientCache(self._conan.cache_folder)
-        else:
-            self._client_cache = ClientCache(self._conan.cache_folder, self._conan.config.global_conf)
-            from conan.internal.cache.home_paths import HomePaths
-            self._home_paths = HomePaths(self._conan.cache_folder)
-        self.info_cache = ConanInfoCache(user_save_path, self.get_all_local_refs())
-        Logger().debug("Initialized Conan V2 API wrapper")
+
+        self.init_client_cache()
+
+        from .cache.conan_cache import ConanInfoCache
+        self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
+        self.logger.debug("Initialized Conan V2 API wrapper")
         return self
+
+    def init_client_cache(self):
+
+        if conan_version < Version("2.4.0"):
+            from conans.client.cache.cache import ClientCache
+        else:
+            from conan.internal.cache.cache import PkgCache as ClientCache
+        self._client_cache = ClientCache(
+            self._conan.cache_folder, self._conan.config.global_conf)
+        from conan.internal.cache.home_paths import HomePaths
+        self._home_paths = HomePaths(self._conan.cache_folder)
+
+
 
     ### General commands ###
 
@@ -57,12 +69,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_profile_settings(self, profile_name: str) -> ConanSettings:
         from conans.client.profile_loader import ProfileLoader
         try:
-            if conan_version < Version("2.0.14"):
-                profile = ProfileLoader(self._client_cache).load_profile(profile_name)
-            else:
-                profile = ProfileLoader(
-                    self._client_cache.cache_folder).load_profile(profile_name)
-
+            profile = ProfileLoader(self._conan.cache_folder).load_profile(profile_name)
             return profile.settings
         except Exception as e:
             Logger().error(f"Can't get profile {profile_name} settings: {str(e)}")
@@ -103,12 +110,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     def get_default_settings(self) -> ConanSettings:
         from conans.client.profile_loader import ProfileLoader
-        if conan_version < Version("2.0.14"):
-            profile = ProfileLoader(self._client_cache).load_profile(
-                    Path(self._conan.profiles.get_default_host()).name)
-        else:
-            profile = ProfileLoader(self._client_cache.cache_folder).load_profile(
-                    Path(self._conan.profiles.get_default_host()).name)
+        profile = ProfileLoader(self._conan.cache_folder).load_profile(
+            Path(self._conan.profiles.get_default_host()).name)
+
         return dict(profile.settings)
 
     # user_name, authenticated
@@ -123,10 +127,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return str(info.get("user_name", "")), info.get("authenticated", False)
 
     def get_config_file_path(self) -> Path:
-        if conan_version < Version("2.0.14"):
-            cf_path = Path(self._client_cache.new_config_path)
-        else:
-            cf_path = Path(self._home_paths.global_conf_path)
+        cf_path = Path(self._home_paths.global_conf_path)
         return cf_path
 
     def get_config_entry(self, config_name: str, default_value: Any) -> Any:
@@ -136,19 +137,11 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return True # always on in 2
 
     def get_settings_file_path(self) -> Path:
-        settings_path = None
-        if conan_version < Version("2.0.14"):
-            settings_path = Path(self._client_cache.settings_path)
-        else:
-            settings_path = Path(self._home_paths.settings_path)
+        settings_path = Path(self._home_paths.settings_path)
         return settings_path
 
     def get_profiles_path(self) -> Path:
-        profiles_path = None
-        if conan_version < Version("2.0.14"):
-            profiles_path = Path(self._client_cache.profiles_path)
-        else:
-            profiles_path = Path(self._home_paths.profiles_path)
+        profiles_path = Path(self._home_paths.profiles_path)
         return profiles_path
 
     def get_user_home_path(self) -> Path:
@@ -281,9 +274,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             path = self.get_conanfile_path(conan_ref)
             from conan.internal.conan_app import ConanApp
-            if conan_version < Version("2.0.14"):
-                app = ConanApp(self._conan.cache_folder)
-            elif conan_version < Version("2.1"):
+            if conan_version < Version("2.1"):
                 app = ConanApp(self._conan.cache_folder, self._conan.config.global_conf)
             else:
                 app = ConanApp(self._conan)

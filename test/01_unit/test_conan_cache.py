@@ -3,11 +3,10 @@ import tempfile
 import pytest
 from shutil import copyfile
 from pathlib import Path
-from conan_unified_api import INVALID_PATH
-from conan_unified_api import conan_version
+from conan_unified_api.base import INVALID_PATH, conan_version
 
-from conan_unified_api.conan_wrapper import ConanInfoCache
-from conan_unified_api.conan_wrapper.types import ConanRef as CFR
+from conan_unified_api import ConanInfoCache
+from conan_unified_api.types import ConanRef as CFR
 from test.conftest import PathSetup
 
 

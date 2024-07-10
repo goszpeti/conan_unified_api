@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conan-unified-api"
 authors = [{name = "Péter Gosztolya and Contributors"}]
-version = "0.1.0"
-requires-python = ">=3.10"
-description = "Compatibility layer for Conan 1 and 2 for Python 3.10+"
+version = "0.1.0a1"
+requires-python = ">=3.8"
+description = "Compatibility layer for Conan 1 and 2 for Python 3.8+"
 readme = "README.md"
 keywords = ["conan", "api"]
 license = {file = "LICENSE"}
@@ -15,7 +15,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython"]
 dependencies = [
-    "conan>=1.48, <2.2",
+    "conan>=1.48, <2.6",
+    # compatibility
+    'contextlib-chdir==1.0.2; python_version<"3.11"',  # BSD License (BSD-3-Clause)
     'typing-extensions>=3.10.0.2, <5',  # Python Software Foundation License(PSF)
     "packaging",  # use the built-in, or get latest if there is some issue with pip
 ]
@@ -27,17 +29,14 @@ issues = "https://github.com/goszpeti/conan_unified_api/issues"
 [project.optional-dependencies]
 dev = [
     "rope", # refactoring
-    "debugpy", # Qt thread debugging
     ]
 test = [
+    "psutil==5.9.8",
     "pytest==8.1.1",
     "pytest-cov==4.1.0",
     "pytest-mock==3.12.0",
     "pytest-check==2.3.1",
 ]
-
-# [tool.setuptools.package-data]
-# "conan_explorer" = ["**/*.pyi"]
 
 [tool.ruff]
 line-length=88
@@ -45,3 +44,13 @@ target-version = "py38"
 
 [tool.autopep8]
 max_line_length = 88
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "test",
+]
+markers = [
+    "conanv1: mark as working with conan 1.x installed",
+    "conanv2: mark as working with conan 2.x installed"
+]

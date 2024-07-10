@@ -2,9 +2,7 @@
 
 import inspect
 from types import FunctionType
-
-from conan_unified_api import DEBUG_LEVEL
-
+from . import DEBUG_LEVEL
 
 class SignatureMismatchException(Exception):
     pass

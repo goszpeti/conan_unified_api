@@ -112,19 +112,3 @@ class LoggerWriter:
         """ For interface compatiblity """
         pass
 
-
-def create_key_value_pair_list(input_dict: Dict[str, Any]) -> List[str]:
-    """
-    Helper to create name=value string list from dict
-    Filters "ANY" options.
-    """
-    res_list: List[str] = []
-    if not input_dict:
-        return res_list
-    for name, value in input_dict.items():
-        value = str(value)
-        # this is not really safe, but there can be wild values...
-        if "any" in value.lower() or "none" in value.lower():
-            continue
-        res_list.append(name + "=" + value)
-    return res_list
