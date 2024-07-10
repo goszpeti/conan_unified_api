@@ -1,23 +1,13 @@
 """ OS Abstraction Layer for all file based functions """
 
-from importlib.metadata import distribution
-from packaging.version import Version
 import os
 import stat
-from pathlib import Path
 import sys
-
-from conan_unified_api.logger import Logger
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Dict, List
 
-INVALID_PATH = "Unknown"
-# used to indicate a conan reference is invalid
-INVALID_CONAN_REF = "Invalid/0.0.1@NA/NA"
-DEBUG_LEVEL = int(os.getenv("CONAN_UNIFIED_API_DEBUG_LEVEL", "0"))
-CONAN_LOG_PREFIX = "CONAN: "
-
-conan_pkg_info = distribution("conan")
-conan_version = Version(conan_pkg_info.version)
+from conan_unified_api.base.logger import Logger
 
 
 def str2bool(value: str) -> bool:
@@ -29,6 +19,23 @@ def str2bool(value: str) -> bool:
     if value in {'no', 'false', 'n', '0'}:
         return False
     return False
+
+
+def create_key_value_pair_list(input_dict: Dict[str, Any]) -> List[str]:
+    """
+    Helper to create name=value string list from dict
+    Filters "ANY" options.
+    """
+    res_list: List[str] = []
+    if not input_dict:
+        return res_list
+    for name, value in input_dict.items():
+        value = str(value)
+        # this is not really safe, but there can be wild values...
+        if "any" in value.lower() or "none" in value.lower():
+            continue
+        res_list.append(name + "=" + value)
+    return res_list
 
 def delete_path(dst: Path):
     """

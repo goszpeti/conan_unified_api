@@ -3,11 +3,11 @@ from multiprocessing import RLock
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from conan_unified_api.helper import INVALID_CONAN_REF, INVALID_PATH, conan_version
-from conan_unified_api.logger import Logger
-from conan_unified_api.helper import delete_path
-from .types import ConanRef
-from .unified_api import ConanCommonUnifiedApi as ConanAPI
+from conan_unified_api.base import INVALID_CONAN_REF, INVALID_PATH, conan_version
+from conan_unified_api.base.logger import Logger
+from conan_unified_api.base.helper import delete_path
+from ..types import ConanRef
+from ..unified_api import ConanCommonUnifiedApi as ConanAPI
 
 
 class ConanInfoCache():

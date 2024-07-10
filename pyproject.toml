@@ -36,9 +36,6 @@ test = [
     "pytest-check==2.3.1",
 ]
 
-# [tool.setuptools.package-data]
-# "conan_explorer" = ["**/*.pyi"]
-
 [tool.ruff]
 line-length=88
 target-version = "py38"

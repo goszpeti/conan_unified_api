@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 
-from conan_unified_api.helper import (delete_path)
+from conan_unified_api.base.helper import (delete_path)
 
 
 def test_delete():

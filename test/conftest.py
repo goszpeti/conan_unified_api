@@ -14,7 +14,7 @@ from typing import Generator
 import psutil
 import pytest
 from conan_unified_api import base_path, ConanInfoCache, ConanApiFactory as ConanApi
-from conan_unified_api.helper import str2bool
+from conan_unified_api.base.helper import str2bool
 from conan_unified_api.types import ConanRef
 from conan_unified_api import conan_version
 

@@ -6,13 +6,12 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 from typing_extensions import Self
 from unittest.mock import patch
 
-from conan_unified_api import INVALID_PATH, conan_version, Version
-from conan_unified_api.logger import Logger
-from conan_unified_api.typing import SignatureCheckMeta
-
+from .base import INVALID_PATH, conan_version, Version
+from .base.logger import Logger
+from .base.helper import create_key_value_pair_list
+from .base.typing import SignatureCheckMeta
 from .types import (ConanAvailableOptions, ConanException, ConanOptions, ConanPackageId,
-    ConanPackagePath, ConanPkg, ConanPkgRef, ConanRef, ConanSettings, EditablePkg, Remote,
-    create_key_value_pair_list)
+    ConanPackagePath, ConanPkg, ConanPkgRef, ConanRef, ConanSettings, EditablePkg, Remote)
 from .unified_api import ConanCommonUnifiedApi
 
 current_path = Path(__file__).parent
@@ -20,7 +19,7 @@ current_path = Path(__file__).parent
 if TYPE_CHECKING:
     from conan.api.conan_api import ConanAPI # type: ignore
     from conans.client.cache.cache import ClientCache
-    from .conan_cache import ConanInfoCache
+    from .cache.conan_cache import ConanInfoCache
     from conan.internal.cache.home_paths import HomePaths  # type: ignore
 
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
@@ -37,7 +36,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         from conan.api.conan_api import ConanAPI
         from conans.client.cache.cache import ClientCache
 
-        from .conan_cache import ConanInfoCache
+        from .cache.conan_cache import ConanInfoCache
         self._conan = ConanAPI()
         if conan_version < Version("2.0.14"):
             self._client_cache = ClientCache(self._conan.cache_folder)

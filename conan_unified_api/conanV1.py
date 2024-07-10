@@ -8,25 +8,26 @@ from tempfile import gettempdir
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Self
 from unittest.mock import patch
-from conan_unified_api.helper import delete_path, save_sys_path
-from conan_unified_api.typing import SignatureCheckMeta
+from conan_unified_api.base.helper import delete_path, save_sys_path
+from conan_unified_api.base.typing import SignatureCheckMeta
 
 try:
     from contextlib import chdir
 except ImportError:
     from contextlib_chdir import chdir # type: ignore
 
-from .logger import Logger
+from .base.logger import Logger
+from .base.helper import create_key_value_pair_list
 from .types import (ConanAvailableOptions, ConanOptions, ConanPackageId, ConanPackagePath, 
                     ConanPkg, ConanRef, ConanPkgRef, ConanException, ConanSettings, EditablePkg, 
-                    LoggerWriter, Remote, create_key_value_pair_list)
+                    LoggerWriter, Remote)
 from .unified_api import ConanCommonUnifiedApi
 
 if TYPE_CHECKING:
-    from .conan_cache import ConanInfoCache
+    from .cache.conan_cache import ConanInfoCache
     from conans.client.conan_api import ClientCache, ConanAPIV1
 
-from conan_unified_api.helper import (CONAN_LOG_PREFIX, INVALID_PATH)
+from conan_unified_api.base import (CONAN_LOG_PREFIX, INVALID_PATH)
 
 current_path = Path(__file__).parent
 
@@ -76,7 +77,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             self.remove_locks()
         except Exception as e:
             self.logger.debug(str(e))
-        from .conan_cache import ConanInfoCache
+        from .cache.conan_cache import ConanInfoCache
         self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
         self.logger.debug("Initialized Conan V1 API wrapper")
 
@@ -104,13 +105,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self._conan.remove_locks()
         self.logger.info("Removed Conan cache locks.")
 
-    def info(self, conan_ref: Union[ConanRef, str]) -> Dict[str, Any]:
-        with save_sys_path():
-            self._conan.info(str(conan_ref))
+    # def info(self, conan_ref: Union[ConanRef, str]) -> Dict[str, Any]:
+    #     with save_sys_path():
+    #         self._conan.info(str(conan_ref))
 
-    def inspect(self, conan_ref: Union[ConanRef, str]):
-        with save_sys_path():
-            self._conan.inspect(str(conan_ref))
+    # def inspect(self, conan_ref: Union[ConanRef, str]):
+    #     with save_sys_path():
+    #         self._conan.inspect(str(conan_ref))
 
     def get_profiles(self) -> List[str]:
         return self._conan.profile_list()

@@ -4,8 +4,8 @@ Convenience access to all user related classes and factory for conan api.
 from importlib.metadata import distribution
 from pathlib import Path
 
-from .helper import conan_version
-from .conan_cache import ConanInfoCache
+from .base import conan_version
+from .cache.conan_cache import ConanInfoCache
 from .unified_api import ConanCommonUnifiedApi
 
 PKG_NAME = "conan_unified_api"

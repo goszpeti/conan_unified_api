@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
-from conan_unified_api.helper import INVALID_CONAN_REF, INVALID_PATH, conan_version
-from conan_unified_api.logger import Logger
+from conan_unified_api.base import INVALID_CONAN_REF, INVALID_PATH, conan_version
+from conan_unified_api.base.logger import Logger
 from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef, 
             ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
 from typing_extensions import Self
 
 if TYPE_CHECKING:
-    from conan_unified_api.conan_cache import ConanInfoCache
+    from conan_unified_api.cache.conan_cache import ConanInfoCache
 
 #### Interface
 class ConanUnifiedApi():

@@ -7,7 +7,7 @@ import pytest
 from test.conftest import TEST_REF, conan_install_ref, conan_remove_ref
 
 from conan_unified_api import ConanApiFactory as ConanApi
-from conan_unified_api.types import create_key_value_pair_list
+from conan_unified_api.base.helper import create_key_value_pair_list
 from conan_unified_api.types import ConanRef
 
 @pytest.mark.conanv1
@@ -215,7 +215,7 @@ def test_create_key_value_list(base_fixture):
 @pytest.mark.conanv2
 def test_search_for_all_packages(base_fixture):
     """ Test, that an existing ref will be found in the remotes. """
-    conan = ConanApi().init_api()
+    conan = ConanApi()
     res = conan.search_recipe_all_versions_in_remotes(ConanRef.loads(TEST_REF))
     ref = ConanRef.loads(TEST_REF)  # need to convert @_/_
     assert str(ref) in str(res)

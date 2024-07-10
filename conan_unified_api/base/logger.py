@@ -29,7 +29,7 @@ class Logger(logging.Logger):
         root.setLevel(logging.ERROR)
 
         from conan_unified_api import PKG_NAME
-        from conan_unified_api.helper import DEBUG_LEVEL
+        from conan_unified_api.base import DEBUG_LEVEL
 
         logger = logging.getLogger(PKG_NAME)
         logger.setLevel(logging.DEBUG)
