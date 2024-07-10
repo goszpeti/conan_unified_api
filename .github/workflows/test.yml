@@ -104,19 +104,7 @@ jobs:
       - name: Execute unitests with pytest
         run: >-
           pytest -v test/01_unit --junit-xml=./results/result-unit-${{matrix.name}}.xml
-          --cov=conan_explorer --cov-branch --cov-append --capture=no ${{matrix.pytest_args}}
-      - name: Execute integration with pytest
-        env:
-            SKIP_CREATE_CONAN_TEST_DATA: True
-        run: >-
-          pytest -v test/02_integration --junit-xml=./results/result-integration-${{matrix.name}}.xml
-          --cov=conan_explorer --cov-branch --cov-append --capture=no ${{matrix.pytest_args}}
-      - name: Execute system with pytest # Reinstall into site-packages to find install and pkg problems
-        env:
-            SKIP_CREATE_CONAN_TEST_DATA: True
-        run: >-
-          pytest -v test/03_system --junit-xml=./results/result-system-${{matrix.name}}.xml
-          --cov-report xml:cov/cov-${{matrix.name}}.xml --cov=conan_explorer --cov-branch --cov-append ${{matrix.pytest_args}}
+          --cov=conan_unified_api --cov-branch --cov-append --capture=no ${{matrix.pytest_args}}
       - name: Upload Test results
         uses: actions/upload-artifact@v3 # TODO: v4 does not support overwrite anymore
         with:
@@ -125,39 +113,39 @@ jobs:
             cov/
             results/
 
-  sonarcloud:
-    if: always() # eecute, even when tests fail
-    needs:
-      - test
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting,
-          # cf https://sonarcloud.io/project/configuration?analysisMode=GitHubActions
-          fetch-depth: 0
-      - uses: actions/download-artifact@v3
-        with:
-          name: Test results
-          path: ./
-      - name: Fix code coverage paths
-        working-directory: ./cov
-        run: |
-          sed -i 's@/home/runner/work/conan_explorer/conan_explorer@.@g' cov-*.xml
-          sed -i 's@D:\a\conan_explorer\conan_explorer@.@g' cov-*.xml
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.organization=goszpeti
-            -Dsonar.projectKey=goszpeti_conan_explorer
-            -Dsonar.sources=./src
-            -Dsonar.exclusions=**/*_ui.py
-            -Dsonar.tests=./test
-            -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.python.version=3.8,3.9,3.10,3.11
-            -Dsonar.python.coverage.reportPaths=cov/cov-*.xml
-            -Dsonar.python.xunit.reportPath=results/result-*-ubuntu-py39.xml
+  # sonarcloud:
+  #   if: always() # eecute, even when tests fail
+  #   needs:
+  #     - test
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         # Disabling shallow clone is recommended for improving relevancy of reporting,
+  #         # cf https://sonarcloud.io/project/configuration?analysisMode=GitHubActions
+  #         fetch-depth: 0
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: Test results
+  #         path: ./
+  #     - name: Fix code coverage paths
+  #       working-directory: ./cov
+  #       run: |
+  #         sed -i 's@/home/runner/work/conan_explorer/conan_explorer@.@g' cov-*.xml
+  #         sed -i 's@D:\a\conan_explorer\conan_explorer@.@g' cov-*.xml
+  #     - name: SonarCloud Scan
+  #       uses: sonarsource/sonarcloud-github-action@master
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #       with:
+  #         args: >
+  #           -Dsonar.organization=goszpeti
+  #           -Dsonar.projectKey=goszpeti_conan_unified_api
+  #           -Dsonar.sources=./src
+  #           -Dsonar.exclusions=**/*_ui.py
+  #           -Dsonar.tests=./test
+  #           -Dsonar.sourceEncoding=UTF-8
+  #           -Dsonar.python.version=3.8,3.9,3.10,3.11
+  #           -Dsonar.python.coverage.reportPaths=cov/cov-*.xml
+  #           -Dsonar.python.xunit.reportPath=results/result-*-ubuntu-py39.xml
