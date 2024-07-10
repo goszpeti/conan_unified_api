@@ -7,7 +7,7 @@ from conan_unified_api.base import INVALID_CONAN_REF, INVALID_PATH, conan_versio
 from conan_unified_api.base.logger import Logger
 from conan_unified_api.base.helper import delete_path
 from ..types import ConanRef
-from ..unified_api import ConanCommonUnifiedApi as ConanAPI
+from ..common import ConanCommonUnifiedApi as ConanAPI
 
 
 class ConanInfoCache():

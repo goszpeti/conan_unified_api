@@ -21,7 +21,7 @@ from .base.helper import create_key_value_pair_list
 from .types import (ConanAvailableOptions, ConanOptions, ConanPackageId, ConanPackagePath, 
                     ConanPkg, ConanRef, ConanPkgRef, ConanException, ConanSettings, EditablePkg, 
                     LoggerWriter, Remote)
-from .unified_api import ConanCommonUnifiedApi
+from .common import ConanCommonUnifiedApi
 
 if TYPE_CHECKING:
     from .cache.conan_cache import ConanInfoCache
