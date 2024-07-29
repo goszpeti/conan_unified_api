@@ -21,17 +21,13 @@ import test.conan_helper
 
 exe_ext = ".exe" if platform.system() == "Windows" else ""
 conan_server_thread = None
-outcome = None
 
 def pytest_report_teststatus(report, config):
-    if not is_ci_job():
-        test.conan_helper.TESTED_ADD_REMOVE_REMOTE = True
-        test.conan_helper.TESTED_DISABLE_REMOTE = True
     if report.when == 'call':
-        global outcome
-        outcome = report.outcome
-        # if request.node.name == "test_add_remove_remotes":
-        #     test.conan_helper.TESTED_ADD_REMOVE_REMOTE = True
+        if report.head_line == "test_add_remove_remotes" and report.outcome == "passed":
+            test.conan_helper.TESTED_ADD_REMOVE_REMOTE = True
+        if report.head_line == "test_disable_remotes" and report.outcome == "passed":
+            test.conan_helper.TESTED_DISABLE_REMOTE = True
 
 
 @pytest.fixture()
@@ -46,7 +42,7 @@ def conan_api():
             os.remove(base_path / ConanInfoCache.CACHE_FILE_NAME)
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")  # , autouse=True
 def ConanServer():
     os.environ["CONAN_NON_INTERACTIVE"] = "True"  # don't hang is smth. goes wrong
     if not check_if_process_running("conan_server", timeout_s=0):

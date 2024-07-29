@@ -23,7 +23,6 @@ It could also be an auto session fixture,
 but then the helper fcns from conan_helper can't use it
 """
 conan_api = ConanApiFactory()
-conan_api.init_api()
 ##########################################
 
 

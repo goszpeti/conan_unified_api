@@ -1,9 +1,8 @@
 
 import pytest
-from conan_unified_api.types import Remote
 from conan_unified_api.unified_api import ConanUnifiedApi
 from test.conan_helper import disable_remote, remove_remote, add_remote, TEST_REMOTE_NAME
-from test import TEST_REMOTE_URL, TEST_REMOTE_USER
+from test import TEST_REMOTE_URL, TEST_REMOTE_USER, time_function
 
 @pytest.fixture()
 def new_remote(name: str = "new1", url: str = "http://localhost:9303"):
@@ -12,6 +11,45 @@ def new_remote(name: str = "new1", url: str = "http://localhost:9303"):
     yield name
     remove_remote(name)
 
+
+def test_add_remove_remotes(conan_api: ConanUnifiedApi):
+    """ Check that adding a new remote adds it with all used options.
+    Afterwards delete it and check.
+    """
+    test_remote_name = "new1"
+    # remove with cli to ensure that new1 does not exist
+    with time_function("remove_remote_setup"):
+        remove_remote(test_remote_name)
+
+    orig_remotes = conan_api.get_remotes()
+    with time_function("add_remote"):
+        conan_api.add_remote(test_remote_name, "http://localhost:9301", False)
+
+    new_remote = conan_api.get_remotes()[-1]
+    assert new_remote.name == test_remote_name
+    assert new_remote.url == "http://localhost:9301"
+    assert not new_remote.verify_ssl
+
+    with time_function("remove_remote"):
+        conan_api.remove_remote(test_remote_name)
+
+    assert len(conan_api.get_remotes()) == len(orig_remotes)
+
+
+def test_disable_remotes(conan_api: ConanUnifiedApi, new_remote: str):
+    remote = conan_api.get_remote(new_remote)
+    assert remote
+    assert not remote.disabled
+
+    conan_api.disable_remote(new_remote, True)
+    remote = conan_api.get_remote(new_remote)
+    assert remote
+    assert remote.disabled
+
+    conan_api.disable_remote(new_remote, False)
+    remote = conan_api.get_remote(new_remote)
+    assert remote
+    assert not remote.disabled
 
 def test_get_remote_user_info(conan_api: ConanUnifiedApi):
     """ Check that get_remote_user_info returns a tuple of name and login
@@ -43,7 +81,7 @@ def test_get_remotes_names(conan_api: ConanUnifiedApi, new_remote: str):
     assert TEST_REMOTE_NAME in remote_names
     assert new_remote not in remote_names
 
-    conan_api.get_remote_names(include_disabled=True)
+    remote_names = conan_api.get_remote_names(include_disabled=True)
     assert TEST_REMOTE_NAME in remote_names
     assert new_remote in remote_names
 
@@ -54,27 +92,6 @@ def test_get_remote(conan_api: ConanUnifiedApi):
     assert remote.name == TEST_REMOTE_NAME
     assert remote.url == TEST_REMOTE_URL
 
-
-def test_add_remove_remotes(conan_api: ConanUnifiedApi):
-    """ Check that adding a new remote adds it with all used options.
-    Afterwards delete it and check.
-    """
-    test_remote_name = "new1"
-    # remove with cli to ensure that new1 does not exist
-    remove_remote(test_remote_name)
-
-    orig_remotes = conan_api.get_remotes()
-    conan_api.add_remote(test_remote_name, "http://localhost:9301", False)
-
-    new_remote = conan_api.get_remotes()[-1]
-    assert new_remote.name == test_remote_name
-    assert new_remote.url == "http://localhost:9301"
-    assert not new_remote.verify_ssl
-
-    conan_api.remove_remote(test_remote_name)
-
-    assert len(conan_api.get_remotes()) == len(orig_remotes)
-    
 
 
 def test_update_remotes(conan_api: ConanUnifiedApi, new_remote: str):
@@ -90,21 +107,6 @@ def test_update_remotes(conan_api: ConanUnifiedApi, new_remote: str):
     remotes = conan_api.get_remotes()
     assert remotes[0].name == new_remote
 
-
-def test_disable_remotes(conan_api: ConanUnifiedApi, new_remote: str):
-    remote = conan_api.get_remote(new_remote)
-    assert remote
-    assert not remote.disabled
-
-    conan_api.disable_remote(new_remote, True)
-    remote = conan_api.get_remote(new_remote)
-    assert remote
-    assert remote.disabled
-
-    remote = conan_api.get_remote(new_remote)
-    assert remote
-    conan_api.disable_remote(new_remote, False)
-    assert not remote.disabled
 
 def test_rename_remotes():
     pass

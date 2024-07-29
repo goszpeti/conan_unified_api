@@ -5,14 +5,15 @@ where we don't want to use the conan_unified_api methods for setting up the test
 """
 import os
 import platform
+import subprocess
 from conan_unified_api import conan_version
 from conan_unified_api.types import ConanRef
 from . import TEST_REMOTE_NAME, PathSetup, is_ci_job, conan_api
 
 # TESTED feature switches - after these switches are set true,
 # the cli functions will switch to the much faster internal methods
-TESTED_ADD_REMOVE_REMOTE = False
-TESTED_DISABLE_REMOTE = False
+TESTED_ADD_REMOVE_REMOTE = not is_ci_job()
+TESTED_DISABLE_REMOTE = not is_ci_job()
 
 def conan_install_ref(ref, args="", profile=None):
     paths = PathSetup()
@@ -95,6 +96,14 @@ def disable_remote(remote_name):
     if TESTED_DISABLE_REMOTE:
         conan_api.disable_remote(remote_name, True)
     os.system(f"conan remote disable {remote_name}")
+
+def get_remote_list():
+    ret = subprocess.check_output("conan remote list").decode()
+    lines = ret.split("\n")
+    remote_list = []
+    for line in lines:
+        remote_list.append(line.split(" ")[0].rstrip(":"))
+    return remote_list
 
 def remove_remote(remote_name):
     if TESTED_ADD_REMOVE_REMOTE:
