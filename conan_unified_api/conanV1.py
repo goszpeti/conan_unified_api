@@ -156,11 +156,17 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_config_file_path(self) -> Path:
         return Path(self._client_cache.conan_conf_path)
 
-    def get_config_entry(self, config_name: str, default_value: Any) -> Any:
+    def get_config_entry(self, config_name: str) -> Any:
         try:
-            return self._client_cache.config.get_item(config_name)
+            self._conan.out._stream.disabled = True # type: ignore
+            config_value = self._conan.config_get(config_name) # mute this output
+            self._conan.out._stream.disabled = False  # type: ignore
+            return config_value
         except Exception:
-            return default_value
+            config_entry_suffix = config_name.split(".")[1]
+            config_value = self._client_cache.config.env_vars.get(
+                "CONAN_" + config_entry_suffix.upper(), "")
+            return config_value
 
     def get_revisions_enabled(self) -> bool:
         return self._client_cache.config.revisions_enabled

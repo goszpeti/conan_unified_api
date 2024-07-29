@@ -51,7 +51,7 @@ def test_conan_get_conan_buildinfo():
     assert "ENV_example" in buildinfo
 
 
-def test_conan_find_remote_pkg(base_fixture):
+def test_conan_find_remote_pkg(repo_paths):
     """
     Test, if search_package_in_remotes finds a package for the current system and the specified options.
     The function must find exactly one pacakge, which uses the spec. options and corresponds to the
@@ -73,7 +73,7 @@ def test_conan_find_remote_pkg(base_fixture):
                 continue
             assert default_settings[setting] in pkg["settings"][setting]
 
-def test_conan_not_find_remote_pkg_wrong_opts(base_fixture):
+def test_conan_not_find_remote_pkg_wrong_opts(repo_paths):
     """
     Test, if a wrong Option return causes an error.
     Empty list must be returned and the error be logged.
@@ -84,7 +84,7 @@ def test_conan_not_find_remote_pkg_wrong_opts(base_fixture):
                                                       {"BogusOption": "True"})
     assert not pkg
 
-def test_conan_find_local_pkg(base_fixture):
+def test_conan_find_local_pkg(repo_paths):
     """
     Test, if get_package installs the package and returns the path and check it again.
     The bin dir in the package must exist (indicating it was correctly downloaded)
@@ -95,7 +95,7 @@ def test_conan_find_local_pkg(base_fixture):
     pkgs = conan.find_best_matching_packages(ConanRef.loads(TEST_REF))
     assert len(pkgs) == 1 # default options are filtered
 
-def test_get_path_or_install(base_fixture):
+def test_get_path_or_install(repo_paths):
     """
     Test, if get_package installs the package and returns the path and check it again.
     The bin dir in the package must exist (indicating it was correctly downloaded)
@@ -144,7 +144,7 @@ def test_install_with_any_settings(mocker, capfd):
     assert "Cannot install package" not in captured.err
 
 # @pytest.mark.conanv2 TODO create package for it
-def test_compiler_no_settings(base_fixture, capfd):
+def test_compiler_no_settings(repo_paths, capfd):
     """
     Test, if a package with no settings at all can install
     The actual installaton must not return an error.
@@ -162,7 +162,7 @@ def test_compiler_no_settings(base_fixture, capfd):
     conan_remove_ref(ref)
 
 @pytest.mark.conanv2
-def test_resolve_default_options(base_fixture):
+def test_resolve_default_options(repo_paths):
     """
     Test, if different kind of types of default options can be converted to a dict
     Dict is expected.
@@ -182,7 +182,7 @@ def test_resolve_default_options(base_fixture):
     assert ret.items()
 
 
-def test_create_key_value_list(base_fixture):
+def test_create_key_value_list(repo_paths):
     """
     Test, that key value pairs can be extracted as strings. No arrays or other tpyes supported.
     The return value must be a list of strings in the format ["key1=value1", "key2=value2]
@@ -198,7 +198,7 @@ def test_create_key_value_list(base_fixture):
     res = create_key_value_pair_list(inp)
     assert res == ["Key1=Value1"]
 
-def test_search_for_all_packages(base_fixture):
+def test_search_for_all_packages(repo_paths):
     """ Test, that an existing ref will be found in the remotes. """
     conan = ConanApi()
     res = conan.search_recipe_all_versions_in_remotes(ConanRef.loads(TEST_REF))

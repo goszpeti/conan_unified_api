@@ -151,10 +151,11 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_config_entry(self, config_name: str, default_value: Any) -> Any:
-        """ Return a conan config entry value (conan.conf). 
-        Use default_value for non existing values. 
-        Can not raise an exception.
+    def get_config_entry(self, config_name: str) -> str:
+        """ Return a conan config entry value (conan.conf).
+        For Conan 1 the format is <section>.<setting_name>, e.g. "general.default_profile".
+        For Conan 2 the formt is <section>:<setting_name>, e.g. core:non_interactive
+        Always returns a string, even for bools.
         """
         raise NotImplementedError
 
@@ -170,7 +171,7 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def get_storage_path(self) -> Path:
-        """ Return Conan storage path, where packages are saved """
+        """ Return Conan storage path where packages are saved """
         raise NotImplementedError
 
     @abstractmethod

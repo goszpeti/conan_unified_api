@@ -1,9 +1,7 @@
 
 import tempfile
-import pytest
 from shutil import copyfile
 from pathlib import Path
-from conan_unified_api.base import INVALID_PATH_VALUE, conan_version
 
 from conan_unified_api import ConanInfoCache
 from conan_unified_api.types import ConanRef as CFR
@@ -19,12 +17,12 @@ def test_new_cache():
     assert (temp_dir / ConanInfoCache.CACHE_FILE_NAME).exists()
 
 
-def test_read_cache(base_fixture: PathSetup):
+def test_read_cache(repo_paths: PathSetup):
     """
     Test reading from a cache file. Check internal state and use public API.
     """
     temp_cache_path = Path(tempfile.mkdtemp()) / ConanInfoCache.CACHE_FILE_NAME
-    copyfile(str(base_fixture.testdata_path / "cache" / "cache_read.json"), str(temp_cache_path))
+    copyfile(str(repo_paths.testdata_path / "cache" / "cache_read.json"), str(temp_cache_path))
 
     cache = ConanInfoCache(temp_cache_path.parent)
     assert cache._remote_packages == {
@@ -48,24 +46,24 @@ def test_read_cache(base_fixture: PathSetup):
     assert CFR.loads("my_package/2.0.0@user/channel") in pkgs
 
 
-def test_read_and_delete_corrupt_cache(base_fixture: PathSetup):
+def test_read_and_delete_corrupt_cache(repo_paths: PathSetup):
     """Test, that an invalid jsonfile is deleted and a new one created"""
     temp_cache_path = Path(tempfile.mkdtemp()) / ConanInfoCache.CACHE_FILE_NAME
-    copyfile(str(base_fixture.testdata_path / "cache" / "cache_read_corrupt.json"), str(temp_cache_path))
+    copyfile(str(repo_paths.testdata_path / "cache" / "cache_read_corrupt.json"), str(temp_cache_path))
 
-    cache = ConanInfoCache(temp_cache_path.parent)
+    ConanInfoCache(temp_cache_path.parent)
     info = ""
     with open(temp_cache_path) as tcf:
         info = tcf.read()
     assert info == ""
 
 
-def test_update_cache(base_fixture: PathSetup):
+def test_update_cache(repo_paths: PathSetup):
     """
     Test, if updating with new values appends/updates the values correctly in the file
     """
     temp_cache_path = Path(tempfile.mkdtemp()) / ConanInfoCache.CACHE_FILE_NAME
-    copyfile(str(base_fixture.testdata_path / "cache" / "cache_write.json"), str(temp_cache_path))
+    copyfile(str(repo_paths.testdata_path / "cache" / "cache_write.json"), str(temp_cache_path))
 
     cache = ConanInfoCache(temp_cache_path.parent)
 

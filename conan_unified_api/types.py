@@ -98,11 +98,15 @@ class LoggerWriter:
     Adds a prefix to do some custom formatting in the Logger.
     """
 
+    disabled = False
+
     def __init__(self, level, prefix: str):
         self.level = level
         self._prefix = prefix
 
     def write(self, message: str):
+        if self.disabled:
+            return
         if message != '\n':
             self.level(self._prefix + message.strip("\n"))
 

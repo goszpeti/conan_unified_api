@@ -165,8 +165,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         cf_path = Path(self._home_paths.global_conf_path)
         return cf_path
 
-    def get_config_entry(self, config_name: str, default_value: Any) -> Any:
-        return self._conan.config.get(config_name, default_value)
+    def get_config_entry(self, config_name: str) -> Any:
+        # TODO: Will possible throw an exception if not in config
+        return self._conan.config.get(config_name, None)
 
     def get_revisions_enabled(self) -> bool:
         return True # always on in 2

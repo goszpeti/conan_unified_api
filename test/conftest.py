@@ -32,6 +32,8 @@ def pytest_report_teststatus(report, config):
 
 @pytest.fixture()
 def conan_api():
+    os.environ["CONAN_NON_INTERACTIVE"] = "True"  # don't hang is smth. goes wrong
+    os.environ["CONAN_REVISIONS_ENABLED"] = "1"
     yield test.conan_api
     # delete cache file
     if (base_path / ConanInfoCache.CACHE_FILE_NAME).exists():
@@ -44,7 +46,6 @@ def conan_api():
 
 @pytest.fixture(scope="session")  # , autouse=True
 def ConanServer():
-    os.environ["CONAN_NON_INTERACTIVE"] = "True"  # don't hang is smth. goes wrong
     if not check_if_process_running("conan_server", timeout_s=0):
         print("STARTING CONAN SERVER")
         start_conan_server()
@@ -63,15 +64,13 @@ def test_output():
 
 
 @pytest.fixture()
-def base_fixture() -> Generator[PathSetup, None, None]:
+def repo_paths() -> Generator[PathSetup, None, None]:
     """
     Set up the global variables to be able to start the application.
     Needs to be used, if the tested component uses the global Logger.
     Clean up all instances after the test.
     """
     paths = PathSetup()
-    os.environ["CONAN_REVISIONS_ENABLED"] = "1"
-
     yield paths
     # Teardown
 
