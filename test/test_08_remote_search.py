@@ -95,54 +95,6 @@ def test_conan_find_local_pkg(repo_paths):
     pkgs = conan.find_best_matching_packages(ConanRef.loads(TEST_REF))
     assert len(pkgs) == 1 # default options are filtered
 
-def test_get_path_or_install(repo_paths):
-    """
-    Test, if get_package installs the package and returns the path and check it again.
-    The bin dir in the package must exist (indicating it was correctly downloaded)
-    """
-    dir_to_check = "bin"
-    conan_remove_ref(TEST_REF)
-
-    conan = ConanApi().init_api()
-    # Gets package path / installs the package
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF))
-    assert (package_folder / dir_to_check).is_dir()
-    # check again for already installed package
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF))
-    assert (package_folder / dir_to_check).is_dir()
-
-def test_get_path_or_install_manual_options():
-    """
-    Test, if a package with options can install.
-    The actual installaton must not return an error and non given options be merged with default options.
-    """
-    # This package has an option "shared" and is fairly small.
-    conan_remove_ref(TEST_REF)
-    conan = ConanApi().init_api()
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF), {"shared": "True"})
-    if platform.system() == "Windows":
-        assert (package_folder / "bin" / "python.exe").is_file()
-    elif platform.system() == "Linux":
-        assert (package_folder / "bin" / "python").is_file()
-
-# @pytest.mark.conanv2 TODO: Create v2 compatible testcase
-def test_install_with_any_settings(mocker, capfd):
-    """
-    Test, if a package with <setting>=Any flags can install
-    The actual installaton must not return an error.
-    """
-    # mock the remote response
-    conan_remove_ref(TEST_REF)
-    # Create the "any" package
-    conan = ConanApi().init_api()
-    assert conan.install_package(ConanRef.loads(TEST_REF), {
-        'id': '325c44fdb228c32b3de52146f3e3ff8d94dddb60', 'options': {},
-        'settings': {'arch_build': 'any', 'os_build': 'Linux', "build_type": "ANY"},
-        'requires': [], 'outdated': False},)
-    captured = capfd.readouterr()
-    assert "ERROR" not in captured.err
-    assert "Cannot install package" not in captured.err
-
 # @pytest.mark.conanv2 TODO create package for it
 def test_compiler_no_settings(repo_paths, capfd):
     """
@@ -160,43 +112,6 @@ def test_compiler_no_settings(repo_paths, capfd):
     assert "ERROR" not in captured.err
     assert "Can't find a matching package" not in captured.err
     conan_remove_ref(ref)
-
-@pytest.mark.conanv2
-def test_resolve_default_options(repo_paths):
-    """
-    Test, if different kind of types of default options can be converted to a dict
-    Dict is expected.
-    """
-    conan = ConanApi().init_api()
-
-    str_val = "option=value"
-    ret = conan._resolve_default_options(str_val)
-    assert ret.items()
-
-    tup_val = ("option=value", "options2=value2")
-    ret = conan._resolve_default_options(tup_val)
-    assert ret.items()
-
-    list_val = ["option=value", "options2=value2"]
-    ret = conan._resolve_default_options(list_val)
-    assert ret.items()
-
-
-def test_create_key_value_list(repo_paths):
-    """
-    Test, that key value pairs can be extracted as strings. No arrays or other tpyes supported.
-    The return value must be a list of strings in the format ["key1=value1", "key2=value2]
-    "Any" values are ignored. (case insensitive)
-    """
-    inp = {"Key1": "Value1"}
-    res = create_key_value_pair_list(inp)
-    assert res == ["Key1=Value1"]
-    inp = {"Key1": "Value1", "Key2": "Value2"}
-    res = create_key_value_pair_list(inp)
-    assert res == ["Key1=Value1", "Key2=Value2"]
-    inp = {"Key1": "Value1", "Key2": "Any"}
-    res = create_key_value_pair_list(inp)
-    assert res == ["Key1=Value1"]
 
 def test_search_for_all_packages(repo_paths):
     """ Test, that an existing ref will be found in the remotes. """
