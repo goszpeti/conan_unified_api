@@ -242,11 +242,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             conan_settings = {}
         options_list = create_key_value_pair_list(conan_options)
         settings_list = create_key_value_pair_list(conan_settings)
-        if not quiet:
-            install_message = f"Installing '<b>{str(conan_ref)}</b>' with profile: {profile}, " \
-                f"settings: {str(settings_list)}, " \
-                f"options: {str(options_list)} and update={update}\n"
-            Logger().info(install_message)
+        install_message = f"Installing '<b>{str(conan_ref)}</b>' with profile: {profile}, " \
+            f"settings: {str(settings_list)}, " \
+            f"options: {str(options_list)} and update={update}\n"
+        Logger().info(install_message)
         from conan.cli.printers.graph import print_graph_basic, print_graph_packages
 
         try:

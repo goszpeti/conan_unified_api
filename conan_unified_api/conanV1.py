@@ -292,11 +292,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             conan_settings = {}
         options_list = create_key_value_pair_list(conan_options)
         settings_list = create_key_value_pair_list(conan_settings)
-        if not quiet:
-            install_message = f"Installing '<b>{str(conan_ref)}</b>' with profile: {profile}, " \
-                f"settings: {str(settings_list)}, " \
-                f"options: {str(options_list)} and update={update}\n"
-            self.logger.info(install_message)
+        install_message = f"Installing '<b>{str(conan_ref)}</b>' with profile: {profile}, " \
+            f"settings: {str(settings_list)}, " \
+            f"options: {str(options_list)} and update={update}\n"
+        self.logger.info(install_message)
         profile_names = None
         if profile:
             profile_names = [profile]

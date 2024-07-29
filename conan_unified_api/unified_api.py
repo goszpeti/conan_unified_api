@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, no_type_check
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
 from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef, 
             ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
@@ -15,6 +15,14 @@ class ConanUnifiedApi():
     API abstraction to provide compatibility between ConanV1 and V2 APIs.
     Thin wrapper:
         If possible, the wrapper will just call the same named method in Conan and add type hints.
+        For ConanReferences it will always accept str and ConnReference Objects.
+        Return types are almost always objects for References and Packages, so that they can be used
+        directly in other functions of this API.
+    Paths as return values:
+        Paths will set an INVALID_PATH value instead of None if the Path can't be determined.
+        This is done, because usually there is always an exists check or something similar, 
+        which then returns naturally False.
+        Otherwise can be checked against the "invalid_path" variable from the conan_unified_api namespace.
     Type Hints:
         The wrapper will alias most of the built-in types to the same name and add typedict hints.
         Own implementations are only used to ensure a compatible behavior of conan basic classes 
@@ -22,15 +30,9 @@ class ConanUnifiedApi():
     Version specific methods:
         In case of a version specific function, the interface will still specify it and the other version(s)
         will simply not do anything or return a default value.
-
     Exception handling:
         All methods can throw unless noted in the docs.
         Often the wrapper method will raise a ConanException and reference the original error in it.
-    Paths as return values:
-        Paths will set an INVALID_PATH value instead of None if the Path can't be determined.
-        This is done, because usually there is always an exists check or something similar, 
-        which then returns naturally False.
-        Otherwise can be checked against the "invalid_path" variable from the conan_unified_api namespace.
 
     """
 

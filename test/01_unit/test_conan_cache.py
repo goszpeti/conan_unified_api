@@ -10,7 +10,6 @@ from conan_unified_api.types import ConanRef as CFR
 from test.conftest import PathSetup
 
 
-@pytest.mark.conanv2
 def test_new_cache():
     """
     Test, if a new cache file is generated, if it does not exist.
@@ -20,7 +19,6 @@ def test_new_cache():
     assert (temp_dir / ConanInfoCache.CACHE_FILE_NAME).exists()
 
 
-@pytest.mark.conanv2
 def test_read_cache(base_fixture: PathSetup):
     """
     Test reading from a cache file. Check internal state and use public API.
@@ -54,7 +52,6 @@ def test_read_cache(base_fixture: PathSetup):
     assert CFR.loads("my_package/2.0.0@user/channel") in pkgs
 
 
-@pytest.mark.conanv2
 def test_read_and_delete_corrupt_cache(base_fixture: PathSetup):
     """Test, that an invalid jsonfile is deleted and a new one created"""
     temp_cache_path = Path(tempfile.mkdtemp()) / ConanInfoCache.CACHE_FILE_NAME
@@ -67,7 +64,6 @@ def test_read_and_delete_corrupt_cache(base_fixture: PathSetup):
     assert info == ""
 
 
-@pytest.mark.conanv2
 def test_update_cache(base_fixture: PathSetup):
     """
     Test, if updating with new values appends/updates the values correctly in the file

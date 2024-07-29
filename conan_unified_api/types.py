@@ -1,5 +1,6 @@
 from __future__ import annotations
 from contextlib import redirect_stderr, redirect_stdout
+from conans.errors import ConanException  # noqa: F401
 from dataclasses import dataclass
 from pathlib import Path
 import os
@@ -10,12 +11,9 @@ from typing_extensions import TypeAlias
 
 from conan_unified_api import conan_version
 
-from conans.errors import ConanException
-
-
 if conan_version.major == 1:
     from conans.model.ref import ConanFileReference, PackageReference # type: ignore
-    from conans.paths.package_layouts.package_editable_layout import PackageEditableLayout
+    from conans.paths.package_layouts.package_editable_layout import PackageEditableLayout  # noqa: F401
     if platform.system() == "Windows":
         from conans.util.windows import CONAN_REAL_PATH, CONAN_LINK
 else:
@@ -36,6 +34,7 @@ else:
                                     pkg_ref.revision,pkg_ref.timestamp)
 
     class ConanFileReference(ConanFileRef):
+        """ Compatibility class for validation in loads method  """
         name: str
         version: str
         user: Optional[str]
@@ -61,7 +60,6 @@ class Remote():
     disabled: bool
     allowed_packages: Optional[List[str]] = None
 
-from conans.errors import ConanException
 
 ConanRef: TypeAlias = ConanFileReference
 ConanPkgRef: TypeAlias = PackageReference

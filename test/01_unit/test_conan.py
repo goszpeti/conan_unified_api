@@ -78,7 +78,6 @@ def test_conan_short_path_root():
         assert not conan.get_short_path_root().exists()
     os.environ.pop("CONAN_USER_HOME_SHORT")
 
-@pytest.mark.conanv2
 def test_conan_find_remote_pkg(base_fixture):
     """
     Test, if search_package_in_remotes finds a package for the current system and the specified options.
@@ -101,7 +100,6 @@ def test_conan_find_remote_pkg(base_fixture):
                 continue
             assert default_settings[setting] in pkg["settings"][setting]
 
-@pytest.mark.conanv2
 def test_conan_not_find_remote_pkg_wrong_opts(base_fixture):
     """
     Test, if a wrong Option return causes an error.
@@ -113,7 +111,6 @@ def test_conan_not_find_remote_pkg_wrong_opts(base_fixture):
                                                       {"BogusOption": "True"})
     assert not pkg
 
-@pytest.mark.conanv2
 def test_conan_find_local_pkg(base_fixture):
     """
     Test, if get_package installs the package and returns the path and check it again.
@@ -125,7 +122,6 @@ def test_conan_find_local_pkg(base_fixture):
     pkgs = conan.find_best_matching_packages(ConanRef.loads(TEST_REF))
     assert len(pkgs) == 1 # default options are filtered
 
-@pytest.mark.conanv2
 def test_get_path_or_install(base_fixture):
     """
     Test, if get_package installs the package and returns the path and check it again.
@@ -142,7 +138,6 @@ def test_get_path_or_install(base_fixture):
     id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF))
     assert (package_folder / dir_to_check).is_dir()
 
-@pytest.mark.conanv2
 def test_get_path_or_install_manual_options():
     """
     Test, if a package with options can install.
@@ -230,7 +225,6 @@ def test_create_key_value_list(base_fixture):
     res = create_key_value_pair_list(inp)
     assert res == ["Key1=Value1"]
 
-@pytest.mark.conanv2
 def test_search_for_all_packages(base_fixture):
     """ Test, that an existing ref will be found in the remotes. """
     conan = ConanApi()
