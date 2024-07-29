@@ -102,9 +102,6 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 pkg_id = packages[0].get("id", "")
                 Logger().warning(f"Multiple matching packages found for '<b>{str(conan_ref)}</b>'!\n"
                                  f"Choosing this: {pkg_id} ({self.build_conan_profile_name_alias(settings)})")
-            # Update cache with this package
-            self.info_cache.update_local_package_path(
-                conan_ref, self.get_package_folder(conan_ref, packages[0].get("id", "")))
             return packages[0]
         Logger().debug(f"No matching local packages found for <b>{str(conan_ref)}</b>")
         return {"id": ""}

@@ -320,10 +320,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                     "packages", [{}])[0].get("id", "")
             self.logger.info(
                 f"Installation of '<b>{str(conan_ref)}</b>' finished")
-            # Update cache with this package
-            package_path = self.get_package_folder(conan_ref, package_id)
-            self.info_cache.update_local_package_path(conan_ref, package_path)
-            return package_id, package_path
+            return package_id, self.get_package_folder(conan_ref, package_id)
         except ConanException as error:
             raise ConanException(f"Can't install reference {str(conan_ref)}': {str(error)}")
 

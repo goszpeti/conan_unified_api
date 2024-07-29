@@ -292,9 +292,6 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             pkg_id = info.package_id
             Logger().info(
                 f"Installation of '<b>{str(conan_ref)}</b>' finished")
-            # Update cache with this package
-            self.info_cache.update_local_package_path(
-                conan_ref, self.get_package_folder(conan_ref, pkg_id))
             return (pkg_id, self.get_package_folder(conan_ref, pkg_id))
         except ConanException as error:
             raise ConanException(
