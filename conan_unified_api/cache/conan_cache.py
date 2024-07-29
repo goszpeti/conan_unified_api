@@ -24,10 +24,8 @@ class ConanInfoCache():
             local_refs = []
 
         self._cache_file = cache_dir / self.CACHE_FILE_NAME
-        self._local_packages: Dict[str, str] = {}
         self._remote_packages: Dict[str, Dict[str, List[str]]] = {}
         self._read_only = False  # for testing purposes
-        self._all_local_refs = local_refs
         self._access_lock = RLock()
 
         # create cache file, if it does not exist
@@ -37,30 +35,6 @@ class ConanInfoCache():
 
         # read cached info
         self._load()
-
-    def get_local_package_path(self, conan_ref: ConanRef) -> Path:
-        """ Return cached package path of a locally installed package. """
-        conan_ref_str = ConanAPI.generate_canonical_ref(conan_ref)
-        if not conan_ref_str:
-            return Path(INVALID_PATH_VALUE)
-
-        with self._access_lock:
-            pkg_path_str = self._local_packages.get(conan_ref_str, "")
-        if not pkg_path_str:
-            pkg_path = Path(INVALID_PATH_VALUE)
-        else:
-            pkg_path = Path(pkg_path_str)
-
-        # validate own cache - remove element if path does not exist
-        with self._access_lock:
-            if not pkg_path.exists() and conan_ref_str in self._local_packages.keys():
-                self._local_packages.pop(conan_ref_str)
-            return pkg_path
-
-    def get_similar_pkg_refs(self, name: str, user: str):
-        """ Return cached info on all available conan refs from the same ref name and user. """
-        return self.get_similar_remote_pkg_refs(name, user) + \
-            self.get_similar_local_pkg_refs(name, user)
 
     def get_similar_remote_pkg_refs(self, name: str, user: str) -> List[ConanRef]:
         """ Return cached info on remotely available conan refs from the same ref name and user. """
@@ -81,17 +55,6 @@ class ConanInfoCache():
                     refs.append(ConanRef(name, version, user, channel))
         return refs
 
-    def get_similar_local_pkg_refs(self, name: str, user: str) -> List[ConanRef]:
-        """ Return cached info on locally available conan refs from the same ref name and user. """
-        refs: List[ConanRef] = []
-        with self._access_lock:
-            for ref in self._all_local_refs:
-                if ref.name == name:
-                    if user != "*" and ref.user != user:
-                        continue  # doe not match user
-                    refs.append(ref)
-        return refs
-
     def get_all_remote_refs(self) -> List[str]:
         """ Return all remote references. Updating, when queries finish. """
         refs = []
@@ -104,21 +67,9 @@ class ConanInfoCache():
                             str(ConanRef(name, version, user, channel)))
         return refs
 
-    def get_all_local_refs(self) -> List[str]:
-        """ 
-        Return all locally installed references.
-        Cache updating on start and when installing in this app.
-        """
-        refs = []
-        with self._access_lock:
-            for ref in self._all_local_refs:
-                refs.append(str(ref))
-        return refs
-
-    def search(self, query: str) -> Tuple[Set[str], Set[str]]:
+    def search(self, query: str) -> Set[str]:
         """
         Return cached info on available conan refs from a query 
-        <Currently unsused!>
         """
         with self._access_lock:
 
@@ -134,20 +85,7 @@ class ConanInfoCache():
                     user = user_split[1]
             for ref in self.get_similar_remote_pkg_refs(name, user):
                 remote_refs.add(str(ref))
-
-            for ref in self._all_local_refs:
-                if query in str(ref):
-                    local_refs.add(str(ref))
-            return (local_refs, remote_refs)
-
-    def update_local_package_path(self, conan_ref: ConanRef, folder: Path):
-        """ Update the cache with the path of a local package path. """
-        with self._access_lock:
-            if self._local_packages.get(str(conan_ref)) == str(folder):
-                return
-            self._local_packages.update(
-                {ConanAPI.generate_canonical_ref(conan_ref): str(folder.as_posix())})
-            self._save()
+            return remote_refs
 
     def invalidate_remote_package(self, conan_ref: ConanRef):
         """ Remove a package, wich was removed on the remote """
@@ -202,7 +140,6 @@ class ConanInfoCache():
             # create file anew
             self._cache_file.touch()
             return
-        self._local_packages = json_data.get("local_packages", {})
         self._remote_packages = json_data.get("remote_packages", {})
         self._read_only = json_data.get("read_only", False)
 
@@ -214,7 +151,6 @@ class ConanInfoCache():
         with self._access_lock:
             json_data["read_only"] = self._read_only
             json_data["remote_packages"] = self._remote_packages
-            json_data["local_packages"] = self._local_packages
             try:
                 with open(self._cache_file, "w") as json_file:
                     json.dump(json_data, json_file)
