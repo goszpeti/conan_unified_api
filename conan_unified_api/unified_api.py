@@ -2,14 +2,19 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
-from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef, 
-            ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
-from typing_extensions import Self
+from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef,
+                    ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
+from typing_extensions import Self, TypeAlias
 
 if TYPE_CHECKING:
     from conan_unified_api.cache.conan_cache import ConanInfoCache
 
-#### Interface and docs
+UserName: TypeAlias = str
+IsAuthenticated: TypeAlias = bool
+
+# Interface and docs
+
+
 class ConanUnifiedApi():
     """ 
     API abstraction to provide compatibility between ConanV1 and V2 APIs.
@@ -51,7 +56,7 @@ class ConanUnifiedApi():
     def init_api(self) -> Self:
         """ Instantiate the internal Conan api. Can be called extra to split up loading. """
         raise NotImplementedError
-    
+
     @abstractmethod
     def mute_logging(self, mute_logging: bool):
         """
@@ -59,6 +64,19 @@ class ConanUnifiedApi():
         :param mute_logging: Disables the logger if set to True, enables it again with false
         """
         raise NotImplementedError
+
+### Helper commands ###
+
+    @staticmethod
+    def generate_canonical_ref(conan_ref: Union[ConanRef, str]) -> str:
+        "Creates a full ref from a short ref, e.g. product/1.0.0 -> product/1.0.0@_/_"
+        raise NotImplementedError
+
+    @staticmethod
+    def conan_ref_from_reflike(conan_ref: Union[ConanRef, str]) -> ConanRef:
+        "Creates a ref object if it is a string otherwise returns the object"
+        raise NotImplementedError
+
 
 ### General commands ###
 
@@ -89,6 +107,8 @@ class ConanUnifiedApi():
         """ Remove local cache locks. For ConanV1 only. """
         raise NotImplementedError
 
+### Profile commands ###
+
     @abstractmethod
     def get_profiles(self) -> List[str]:
         """ Return a list of all profiles """
@@ -99,12 +119,17 @@ class ConanUnifiedApi():
         """ Return a dict of settings for a profile """
         raise NotImplementedError
 
+    @staticmethod
+    def build_conan_profile_name_alias(conan_settings: ConanSettings) -> str:
+        "Build a human readable pseduo profile name, like Windows_x64_vs16_v142_release"
+        raise NotImplementedError
+
     @abstractmethod
     def get_default_settings(self) -> ConanSettings:
         """
         Return the settings of the conan default profile. 
         This is not necessarily the same as get_profile_settings("default"), 
-        because its content can be changed.
+        because the file content can be changed.
         """
         raise NotImplementedError
 
@@ -113,10 +138,7 @@ class ConanUnifiedApi():
         """ Get the path to the folder where profiles are located """
         raise NotImplementedError
 
-    @abstractmethod
-    def get_remote_user_info(self, remote_name: str) -> Tuple[str, bool]: # username, is_authenticated
-        """ Get username and authenticated info for a remote. """
-        raise NotImplementedError
+### Config and settings commands ###
 
     @abstractmethod
     def get_settings_file_path(self) -> Path:
@@ -157,22 +179,8 @@ class ConanUnifiedApi():
         Sadly there is no built-in way to do so. """
         raise NotImplementedError
 
-    @abstractmethod
-    def get_package_folder(self, conan_ref: ConanRef, package_id: str) -> ConanPackagePath:
-        " Get the fully resolved pkg path from the ref and the specific package (id) "
-        raise NotImplementedError
 
-    @abstractmethod
-    def get_export_folder(self, conan_ref: ConanRef) -> Path:
-        """ Get the export folder form a reference """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_conanfile_path(self, conan_ref: ConanRef) -> Path:
-        """ Get local conanfile path. If it is not localy available, download it."""
-        raise NotImplementedError
-
-### Remotes 
+### Remotes ###
 
     @abstractmethod
     def get_remotes(self, include_disabled=False) -> List[Remote]:
@@ -193,9 +201,9 @@ class ConanUnifiedApi():
     def add_remote(self, remote_name: str, url: str, verify_ssl: bool):
         """  Add a new remote with the selected options. Disabled is always false. """
         raise NotImplementedError
-    
+
     @abstractmethod
-    def rename_remote(self, remote_name: str, new_name: str):
+    def rename_remote(self, remote_name: str, new_name: str):  # -> None:
         """ Rename a remote """
         raise NotImplementedError
 
@@ -203,16 +211,16 @@ class ConanUnifiedApi():
     def remove_remote(self, remote_name: str):
         """  Remove a remote """
         raise NotImplementedError
-    
+
     @abstractmethod
-    def update_remote(self, remote_name: str, url: str, verify_ssl: bool, 
-                      index: Optional[int]=None):
+    def update_remote(self, remote_name: str, url: str, verify_ssl: bool,
+                      index: Optional[int] = None):
         """ Update a remote with new information and reorder with index.
         The Remote object is immutable, so we have to get every field separatly.
         The name can't be changed with this, only with rename.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def disable_remote(self, remote_name: str, disabled: bool):
         """
@@ -229,13 +237,18 @@ class ConanUnifiedApi():
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def get_remote_user_info(self, remote_name: str) -> Tuple[UserName, IsAuthenticated]:
+        """ Get username and authenticated info for a remote. """
+        raise NotImplementedError
+
+
 ### Install related methods ###
 
-
     @abstractmethod
-    def install_reference(self, conan_ref: ConanRef, 
-                          conan_settings: Optional[ConanSettings]=None,
-                          conan_options: Optional[ConanOptions]=None, profile="", 
+    def install_reference(self, conan_ref: ConanRef,
+                          conan_settings: Optional[ConanSettings] = None,
+                          conan_options: Optional[ConanOptions] = None, profile="",
                           update=True, generators: List[str] = []
                           ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
@@ -247,7 +260,7 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def install_package(self, conan_ref: ConanRef, package: ConanPkg,
-                            update=True) -> Tuple[ConanPackageId, ConanPackagePath]:
+                        update=True) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan package (id) with the provided extra information.
         Returns the installed id and a valid pkg path, if installation was succesfull.
@@ -257,22 +270,22 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_path_or_auto_install(self, conan_ref: ConanRef, 
-            conan_options: Optional[ConanOptions]=None, 
-            update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
+    def get_path_or_auto_install(self, conan_ref: ConanRef,
+                                 conan_options: Optional[ConanOptions] = None,
+                                 update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and package folder of a conan reference 
         and auto-install it with the best matching package, if it is not available """
         raise NotImplementedError
 
     @abstractmethod
-    def install_best_matching_package(self, conan_ref: ConanRef, 
-            conan_options: Optional[ConanOptions]=None,
-            update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
+    def install_best_matching_package(self, conan_ref: ConanRef,
+                                      conan_options: Optional[ConanOptions] = None,
+                                      update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_options_with_default_values(self, 
-            conan_ref: ConanRef) -> Tuple[ConanAvailableOptions, ConanOptions]:
+    def get_options_with_default_values(self,
+                                        conan_ref: ConanRef) -> Tuple[ConanAvailableOptions, ConanOptions]:
         """ Return the available options and their default values as dict."""
         raise NotImplementedError
 
@@ -280,56 +293,41 @@ class ConanUnifiedApi():
 ### Local References and Packages ###
 
     @abstractmethod
+    def get_export_folder(self, conan_ref: ConanRef) -> Path:
+        """ Get the export folder form a reference """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_conanfile_path(self, conan_ref: ConanRef) -> Path:
+        """ Get local conanfile path. If it is not localy available, download it."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_package_folder(self, conan_ref: ConanRef, package_id: str) -> ConanPackagePath:
+        " Get the fully resolved pkg path from the ref and the specific package (id) "
+        raise NotImplementedError
+
+    @abstractmethod
     def get_conan_buildinfo(self, conan_ref: ConanRef, conan_settings: ConanSettings,
-                            conan_options: Optional[ConanOptions]=None) -> str:
+                            conan_options: Optional[ConanOptions] = None) -> str:
         """ Read conan buildinfo and return as string """
         raise NotImplementedError
 
     @abstractmethod
-    def get_editable(self, conan_ref: Union[ConanRef, str]) -> EditablePkg:
-        """ Get an editable object from conan reference. """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_editables_package_path(self, conan_ref: ConanRef) -> Path:
-        """ Get package path of an editable reference. """
-        raise NotImplementedError
-    
-    @abstractmethod
-    def get_editables_output_folder(self, conan_ref: ConanRef) -> Optional[Path]:
-        """ Get output folder of an editable reference. """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_editable_references(self) -> List[ConanRef]:
-        """ Get all local editable references. """
-        raise NotImplementedError
-
-    @abstractmethod
-    def add_editable(self, conan_ref: Union[ConanRef, str], path: str, output_folder: str) -> bool:
-        """ Add an editable reference. """
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove_editable(self, conan_ref: Union[ConanRef, str]) -> bool:
-        """ Remove an editable reference. """
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove_reference(self, conan_ref: ConanRef, pkg_id: str=""):
+    def remove_reference(self, conan_ref: ConanRef, pkg_id: str = ""):
         """ Remove a conan reference and it's package if specified via id """
         raise NotImplementedError
 
     @abstractmethod
-    def find_best_matching_local_package(self, conan_ref: ConanRef, 
-            conan_options: Optional[ConanOptions]=None) -> ConanPkg:
+    def find_best_matching_local_package(self, conan_ref: ConanRef,
+                                         conan_options: Optional[ConanOptions] = None) -> ConanPkg:
         """ Find a package in the local cache """
         raise NotImplementedError
 
     @abstractmethod
-    def get_best_matching_local_package_path(self, conan_ref: ConanRef, 
-            conan_options: Optional[ConanOptions]=None
-            ) -> Tuple[ConanPackageId, ConanPackagePath]:
+    def get_best_matching_local_package_path(self, conan_ref: ConanRef,
+                                             conan_options: Optional[ConanOptions] = None
+                                             ) -> Tuple[ConanPackageId, ConanPackagePath]:
         " Return the pkg_id and pkg folder of a conan reference, if it is installed. "
         raise NotImplementedError
 
@@ -351,6 +349,38 @@ class ConanUnifiedApi():
     @abstractmethod
     def get_local_pkg_from_path(self, conan_ref: ConanRef, path: Path):
         """ For reverse lookup - give info from path """
+        raise NotImplementedError
+
+### Editables ###
+
+    @abstractmethod
+    def get_editable(self, conan_ref: Union[ConanRef, str]) -> EditablePkg:
+        """ Get an editable object from conan reference. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_editables_package_path(self, conan_ref: ConanRef) -> Path:
+        """ Get package path of an editable reference. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_editables_output_folder(self, conan_ref: ConanRef) -> Optional[Path]:
+        """ Get output folder of an editable reference. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_editable_references(self) -> List[ConanRef]:
+        """ Get all local editable references. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def add_editable(self, conan_ref: Union[ConanRef, str], path: str, output_folder: str) -> bool:
+        """ Add an editable reference. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_editable(self, conan_ref: Union[ConanRef, str]) -> bool:
+        """ Remove an editable reference. """
         raise NotImplementedError
 
 ### Remote References and Packages ###
@@ -380,28 +410,17 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def find_best_matching_package_in_remotes(self, conan_ref: ConanRef, 
-            conan_options: Optional[ConanOptions]) -> List[ConanPkg]:
+    def find_best_matching_package_in_remotes(self, conan_ref: ConanRef,
+                                              conan_options: Optional[ConanOptions]) -> List[ConanPkg]:
         """ Find a package with options in the remotes """
         raise NotImplementedError
 
     @abstractmethod
     def find_best_matching_packages(self, conan_ref: ConanRef,
-                                conan_options: Optional[ConanOptions] = None, 
-                                remote_name: Optional[str] = None) -> List[ConanPkg]:
+                                    conan_options: Optional[ConanOptions] = None,
+                                    remote_name: Optional[str] = None) -> List[ConanPkg]:
         """
         This method tries to find the best matching packages either locally or in a remote,
         based on the users machine and the supplied options.
         """
         raise NotImplementedError
-
-    @staticmethod
-    def generate_canonical_ref(conan_ref: ConanRef) -> str:
-        "Creates a full ref from a short ref, e.g. product/1.0.0 -> product/1.0.0@_/_"
-        raise NotImplementedError
-
-    @staticmethod
-    def build_conan_profile_name_alias(conan_settings: ConanSettings) -> str:
-        "Build a human readable pseduo profile name, like Windows_x64_vs16_v142_release"
-        raise NotImplementedError
-

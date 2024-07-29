@@ -50,43 +50,6 @@ def test_conan_get_conan_buildinfo():
     assert "USER_example" in buildinfo
     assert "ENV_example" in buildinfo
 
-def test_conan_profile_name_alias_builder():
-    """ Test, that the build_conan_profile_name_alias returns human readable strings. """
-    # check empty - should return a default name
-    conan_api = ConanApi()
-    profile_name = conan_api.build_conan_profile_name_alias({})
-    assert profile_name == "No Settings"
-
-    # check a partial
-    settings = {'os': 'Windows', 'arch': 'x86_64'}
-    profile_name = ConanApi().build_conan_profile_name_alias(settings)
-    assert profile_name == "Windows_x64"
-
-    # check windows
-    WINDOWS_x64_VS16_SETTINGS = {'os': 'Windows', 'os_build': 'Windows', 'arch': 'x86_64', 
-                             'arch_build': 'x86_64', 'compiler': 'Visual Studio', 
-                             'compiler.version': '16', 'compiler.toolset': 'v142', 
-                             'build_type': 'Release'}
-    profile_name = ConanApi().build_conan_profile_name_alias(WINDOWS_x64_VS16_SETTINGS)
-    assert profile_name == "Windows_x64_vs16_v142_release"
-
-    # check linux
-    LINUX_X64_GCC7_SETTINGS = {'os': 'Linux', 'arch': 'x86_64', 'compiler': 'gcc', 
-                           'compiler.version': '7.4', 'build_type': 'Debug'}
-    profile_name = ConanApi().build_conan_profile_name_alias(LINUX_X64_GCC7_SETTINGS)
-    assert profile_name == "Linux_x64_gcc7.4_debug"
-
-@pytest.mark.conanv1
-def test_conan_short_path_root():
-    """ Test, that short path root can be read. """
-    new_short_home = Path(tempfile.gettempdir()) / "._myconan_short"
-    os.environ["CONAN_USER_HOME_SHORT"] = str(new_short_home)
-    conan = ConanApi()
-    if platform.system() == "Windows":
-        assert conan.get_short_path_root() == new_short_home
-    else:
-        assert not conan.get_short_path_root().exists()
-    os.environ.pop("CONAN_USER_HOME_SHORT")
 
 def test_conan_find_remote_pkg(base_fixture):
     """

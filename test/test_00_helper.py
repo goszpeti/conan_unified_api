@@ -4,6 +4,8 @@ from pathlib import Path
 
 
 from conan_unified_api.base.helper import (delete_path)
+from conan_unified_api.unified_api import ConanUnifiedApi
+from test import TEST_REF_OFFICIAL
 
 
 def test_delete():
@@ -27,3 +29,8 @@ def test_delete():
         f.write("test")
     delete_path(test_dir)
     assert not test_dir.exists()
+
+
+def test_generate_canonical_ref(conan_api: ConanUnifiedApi):
+    ref = conan_api.generate_canonical_ref(TEST_REF_OFFICIAL.split("@")[0])
+    assert ref == TEST_REF_OFFICIAL

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from .base import INVALID_PATH_VALUE, conan_version
 from .base.logger import Logger
 from .unified_api import ConanUnifiedApi
@@ -265,10 +265,17 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         return default_options
 
     @staticmethod
-    def generate_canonical_ref(conan_ref: ConanRef) -> str:
+    def generate_canonical_ref(conan_ref: Union[ConanRef, str]) -> str:
+        conan_ref = ConanCommonUnifiedApi.conan_ref_from_reflike(conan_ref)
         if conan_ref.user is None and conan_ref.channel is None:
             return str(conan_ref) + "@_/_"
         return str(conan_ref)
+    
+    @staticmethod
+    def conan_ref_from_reflike(conan_ref: Union[ConanRef, str]) -> ConanRef:
+        if isinstance(conan_ref, str):
+            return ConanRef.loads(conan_ref)
+        return conan_ref
 
     @staticmethod
     def build_conan_profile_name_alias(conan_settings: ConanSettings) -> str:

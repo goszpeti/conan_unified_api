@@ -16,7 +16,6 @@ try:
 except ImportError:
     from contextlib_chdir import chdir  # type: ignore
 
-from .base.logger import Logger
 from .base.helper import create_key_value_pair_list
 from .types import (ConanAvailableOptions, ConanOptions, ConanPackageId, ConanPackagePath,
                     ConanPkg, ConanRef, ConanPkgRef, ConanException, ConanSettings, EditablePkg,

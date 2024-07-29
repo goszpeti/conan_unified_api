@@ -108,5 +108,15 @@ def test_update_remotes(conan_api: ConanUnifiedApi, new_remote: str):
     assert remotes[0].name == new_remote
 
 
-def test_rename_remotes():
-    pass
+def test_rename_remotes(conan_api: ConanUnifiedApi, new_remote: str):
+    conan_api.rename_remote(new_remote, "new_ng_last_final")
+    assert "new_ng_last_final" in conan_api.get_remote_names()
+    assert new_remote not in conan_api.get_remote_names()
+
+
+def test_login_remote(conan_api: ConanUnifiedApi):
+    conan_api.login_remote(TEST_REMOTE_NAME, "demo", "demo")
+
+    with pytest.raises(Exception) as excinfo:
+        conan_api.login_remote(TEST_REMOTE_NAME, "demo", "abc")
+    
