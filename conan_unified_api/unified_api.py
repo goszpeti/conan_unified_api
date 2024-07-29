@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, no_type_check
 from abc import abstractmethod
 from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef, 
             ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
@@ -12,29 +12,79 @@ if TYPE_CHECKING:
 #### Interface and docs
 class ConanUnifiedApi():
     """ 
-    API abstraction to provide compatibility between ConanV1 and V2 APIs. 
+    API abstraction to provide compatibility between ConanV1 and V2 APIs.
+    Thin wrapper:
+        If possible, the wrapper will just call the same named method in Conan and add type hints.
+    Type Hints:
+        The wrapper will alias most of the built-in types to the same name and add typedict hints.
+        Own implementations are only used to ensure a compatible behavior of conan basic classes 
+        (like adding the loads method to ConanV2 References)
+    Version specific methods:
+        In case of a version specific function, the interface will still specify it and the other version(s)
+        will simply not do anything or return a default value.
+
+    Exception handling:
+        All methods can throw unless noted in the docs.
+        Often the wrapper method will raise a ConanException and reference the original error in it.
+    Paths as return values:
+        Paths will set an INVALID_PATH value instead of None if the Path can't be determined.
+        This is done, because usually there is always an exists check or something similar, 
+        which then returns naturally False.
+        Otherwise can be checked against the "invalid_path" variable from the conan_unified_api namespace.
+
     """
 
     @abstractmethod
-    def __init__(self, init=True, logger: Optional[logging.Logger] = None, quiet=False):
-        """ 
+    def __init__(self, init=True, logger: Optional[logging.Logger] = None, mute_logging=False):
+        """
         :param init: Calls init_api function directly in the constructor. Can be disabled for faster constructor.
         :param logger: A custom logger can be injected here. Otherwise will use a default logger.
-        :param quiet: Disables the logger, regardless if it was injected ot not.
+        :param mute_logging: Disables the logger, regardless if it was injected ot not.
+        Can not raise an exception.
         """
         self.info_cache: "ConanInfoCache"
         ...
 
     @abstractmethod
     def init_api(self) -> Self:
-        """ Instantiate the internal Conan api. """
+        """ Instantiate the internal Conan api. Can be called extra to split up loading. """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def mute_logging(self, mute_logging: bool):
+        """
+        Can be used to selectively turn on and off logging for methods.
+        :param mute_logging: Disables the logger if set to True, enables it again with false
+        """
         raise NotImplementedError
 
 ### General commands ###
 
     @abstractmethod
+    def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
+        """
+        Calls the conan info method on Conan V1 to return all recipe and pacakges metainfo (including paths.)
+        for the recipe itself and all the dependencies. The order is random. TODO: Make orig. ref 1st
+        For the ConanV2 version it calls graph info, which is the best equivalent method.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = []) -> Dict[str, Any]:
+        """ Get a field of the selected conanfile. Works currently only with a reference, but not with a path. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
+        """ Creates an alias for the target ref with all local packages. For ConanV1 only. """
+        raise NotImplementedError
+
+    # @abstractmethod
+    # def copy(self, conan_ref: Union[ConanRef, str], conan_target_ref):
+
+    @abstractmethod
     def remove_locks(self):
-        """ Remove local cache locks (Currently for V1 only) """
+        """ Remove local cache locks. For ConanV1 only. """
         raise NotImplementedError
 
     @abstractmethod
@@ -58,7 +108,7 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def get_profiles_path(self) -> Path:
-        """ Get the path to the folder where profiles are located"""
+        """ Get the path to the folder where profiles are located """
         raise NotImplementedError
 
     @abstractmethod
@@ -79,7 +129,9 @@ class ConanUnifiedApi():
     @abstractmethod
     def get_config_entry(self, config_name: str, default_value: Any) -> Any:
         """ Return a conan config entry value (conan.conf). 
-        Use default_value for non existing values. """
+        Use default_value for non existing values. 
+        Can not raise an exception.
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -167,7 +219,7 @@ class ConanUnifiedApi():
     def install_reference(self, conan_ref: ConanRef, 
                           conan_settings: Optional[ConanSettings]=None,
                           conan_options: Optional[ConanOptions]=None, profile="", 
-                          update=True, quiet=False, generators: List[str] = []
+                          update=True, generators: List[str] = []
                           ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan reference (without id) with the provided extra information.
@@ -274,10 +326,12 @@ class ConanUnifiedApi():
         """ Returns all installed pkg ids for a reference. """
         raise NotImplementedError
 
+    @abstractmethod
     def get_local_pkg_from_id(self, pkg_ref: ConanPkgRef) -> ConanPkg:
         """ Returns an installed pkg from reference and id """
         raise NotImplementedError
 
+    @abstractmethod
     def get_local_pkg_from_path(self, conan_ref: ConanRef, path: Path):
         """ For reverse lookup - give info from path """
         raise NotImplementedError
@@ -298,7 +352,9 @@ class ConanUnifiedApi():
     @abstractmethod
     def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote: Optional[str],
                                  query=None) -> List[ConanPkg]:
-        " Return all packages for a reference in a specific remote with an optional query. "
+        """ Return all packages for a reference in a specific remote with an optional query. 
+        Can not raise an exception. Returns an empty list if something errors.
+        """
         raise NotImplementedError
 
     @abstractmethod

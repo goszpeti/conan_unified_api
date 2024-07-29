@@ -4,7 +4,7 @@ Convenience access to all user related classes and factory for conan api.
 from importlib.metadata import distribution
 from pathlib import Path
 
-from .base import conan_version
+from .base import conan_version, invalid_path
 from .cache.conan_cache import ConanInfoCache
 from .unified_api import ConanUnifiedApi
 

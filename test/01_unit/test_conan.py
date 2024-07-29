@@ -4,11 +4,29 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from test.conftest import TEST_REF, conan_install_ref, conan_remove_ref
+from test.conftest import TEST_REF, TEST_REF_OFFICIAL, conan_install_ref, conan_remove_ref
 
 from conan_unified_api import ConanApiFactory as ConanApi
 from conan_unified_api.base.helper import create_key_value_pair_list
 from conan_unified_api.types import ConanRef
+
+def test_info():
+    conan = ConanApi().init_api()
+    # ref needs to be in a remote
+    info = conan.info(TEST_REF_OFFICIAL)
+    assert info
+
+def test_inspect():
+    conan = ConanApi().init_api()
+    inspect = conan.inspect(TEST_REF)
+    assert inspect
+
+
+def test_get_remote_user_info():
+    conan = ConanApi().init_api()
+
+    info = conan.get_remote_user_info("local")
+    assert info
 
 @pytest.mark.conanv1
 def test_conan_get_conan_buildinfo():

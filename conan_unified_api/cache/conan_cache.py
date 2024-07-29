@@ -3,7 +3,7 @@ from multiprocessing import RLock
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from conan_unified_api.base import INVALID_CONAN_REF, INVALID_PATH, conan_version
+from conan_unified_api.base import INVALID_PATH_VALUE, conan_version
 from conan_unified_api.base.logger import Logger
 from conan_unified_api.base.helper import delete_path
 from ..types import ConanRef
@@ -41,13 +41,13 @@ class ConanInfoCache():
     def get_local_package_path(self, conan_ref: ConanRef) -> Path:
         """ Return cached package path of a locally installed package. """
         conan_ref_str = ConanAPI.generate_canonical_ref(conan_ref)
-        if not conan_ref_str or conan_ref_str == INVALID_CONAN_REF:
-            return Path(INVALID_PATH)
+        if not conan_ref_str:
+            return Path(INVALID_PATH_VALUE)
 
         with self._access_lock:
             pkg_path_str = self._local_packages.get(conan_ref_str, "")
         if not pkg_path_str:
-            pkg_path = Path(INVALID_PATH)
+            pkg_path = Path(INVALID_PATH_VALUE)
         else:
             pkg_path = Path(pkg_path_str)
 

@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
-from .base import INVALID_CONAN_REF, INVALID_PATH, conan_version
+from .base import INVALID_PATH_VALUE, conan_version
 from .base.logger import Logger
 from .unified_api import ConanUnifiedApi
 from .types import (ConanPkg, ConanRef, ConanPkgRef,
@@ -17,7 +17,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
     implemented here.
     """
 
-    def __init__(self, init=True, logger: Optional[logging.Logger] = None, quiet=False):
+    def __init__(self, init=True, logger: Optional[logging.Logger] = None, mute_logging=False):
         # no direct Conan API access! # TODO: sthink about this...
         self.info_cache: "ConanInfoCache"
 
@@ -25,11 +25,14 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             self.logger = Logger()
         else:
             self.logger = logger
-        if quiet:
-            self.logger.disabled = True
+        self.mute_logging(mute_logging)
 
         if init:
             self.init_api()
+
+    def mute_logging(self, mute_logging: bool):
+        self.logger.disabled = mute_logging
+
 
 ### Install related methods ###
 
@@ -45,19 +48,16 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         package_id = package.get("id", "")
         options = package.get("options", {})
         settings = package.get("settings", {})
-        Logger().info(
-            f"Installing '<b>{str(conan_ref)}</b>':{package_id} with settings: {str(settings)}, "
-            f"options: {str(options)} and update={update}\n")
         try:
             installed_id, package_path = self.install_reference(
-                conan_ref, update=update, conan_settings=settings, conan_options=options, quiet=True)
+                conan_ref, update=update, conan_settings=settings, conan_options=options)
             if installed_id != package_id:
                 Logger().warning(f"Installed {installed_id} instead of selected {package_id}."
                                  "This can happen, if there transitive settings changed in comparison to the build time.")
             return installed_id, package_path
         except ConanException as e:
             Logger().error(f"Can't install package '<b>{str(conan_ref)}</b>': {str(e)}")
-            return "", Path(INVALID_PATH)
+            return "", Path(INVALID_PATH_VALUE)
 
     def get_path_or_auto_install(self, conan_ref: ConanRef, conan_options: Optional[ConanOptions] = None,
                                  update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
@@ -82,11 +82,11 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             conan_ref, conan_options)
         if not packages:
             self.info_cache.invalidate_remote_package(conan_ref)
-            return ("", Path(INVALID_PATH))
+            return ("", Path(INVALID_PATH_VALUE))
         pkg_id, package_path = self.install_package(conan_ref, packages[0], update)
         if package_path.exists():
             return pkg_id, package_path
-        return "", Path(INVALID_PATH)
+        return "", Path(INVALID_PATH_VALUE)
 
 ### Local References and Packages ###
 
@@ -115,7 +115,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         package = self.find_best_matching_local_package(conan_ref, conan_options)
         if package.get("id", ""):
             return package.get("id", ""), self.get_package_folder(conan_ref, package.get("id", ""))
-        return "", Path(INVALID_PATH)
+        return "", Path(INVALID_PATH_VALUE)
 
     def get_local_pkg_from_id(self, pkg_ref: ConanPkgRef) -> ConanPkg:
         """ Returns an installed pkg from reference and id """
@@ -168,9 +168,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         """
         if conan_options is None:
             conan_options = {}
-        # skip search on default invalid recipe
-        if str(conan_ref) == INVALID_CONAN_REF:
-            return []
+
         found_pkgs: List[ConanPkg] = []
         default_settings: ConanSettings = {}
         try:
