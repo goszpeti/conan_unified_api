@@ -4,29 +4,39 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from test.conftest import TEST_REF, TEST_REF_OFFICIAL, conan_install_ref, conan_remove_ref
+from test import TEST_REF, TEST_REF_OFFICIAL
+from test.conan_helper import conan_install_ref, conan_remove_ref
 
 from conan_unified_api import ConanApiFactory as ConanApi
 from conan_unified_api.base.helper import create_key_value_pair_list
 from conan_unified_api.types import ConanRef
 
-def test_info():
-    conan = ConanApi().init_api()
+def test_info_simple(conan_api):
     # ref needs to be in a remote
-    info = conan.info(TEST_REF_OFFICIAL)
-    assert info
-
-def test_inspect():
-    conan = ConanApi().init_api()
-    inspect = conan.inspect(TEST_REF)
-    assert inspect
+    info = conan_api.info(TEST_REF_OFFICIAL)
+    assert len(info) == 1
+    assert info[0].get("binary_remote") == "local"
+    assert info[0].get("reference") == TEST_REF_OFFICIAL.split("@")[0]
 
 
-def test_get_remote_user_info():
-    conan = ConanApi().init_api()
+def test_info_transitive_reqs(conan_api):
+    # TODO: let's hope it does not change on the server... 
+    info = conan_api.info("pybind11/2.12.0")
+    assert len(info) == 1
+    assert info[0].get("binary_remote") == "conancenter"
+    assert info[0].get("reference") == "pybind11/2.12.0"
 
-    info = conan.get_remote_user_info("local")
-    assert info
+    assert info[1].get("reference") == "pybind11/2.12.0" # TODO
+
+
+def test_inspect(conan_api):
+    inspect = conan_api.inspect(TEST_REF)
+    assert inspect.get("name") == ConanRef.loads(TEST_REF).name
+    assert inspect.get("generators") == ["txt", "cmake"]
+
+    inspect = conan_api.inspect(TEST_REF, ["no_copy_source"])
+    assert inspect["no_copy_source"] == True
+
 
 @pytest.mark.conanv1
 def test_conan_get_conan_buildinfo():

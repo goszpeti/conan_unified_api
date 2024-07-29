@@ -33,6 +33,16 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
     def mute_logging(self, mute_logging: bool):
         self.logger.disabled = mute_logging
 
+### Remotes related methods
+
+    def get_remote_names(self, include_disabled=False) -> List[str]:
+        return [remote.name for remote in self.get_remotes(include_disabled)]
+
+    def get_remote(self, remote_name: str) -> Optional[Remote]:
+        for remote in self.get_remotes(True):
+            if remote.name == remote_name:
+                return remote
+        return None
 
 ### Install related methods ###
 
@@ -181,16 +191,18 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             return []
 
         # remove debug releases
-        no_debug_pkgs = list(filter(lambda pkg: pkg.get("settings", {}).get(
-            "build_type", "").lower() != "debug", found_pkgs))
+        no_debug_pkgs = list(filter(lambda pkg: 
+                    pkg.get("settings", {}).get("build_type", "").lower() != "debug", 
+                    found_pkgs))
         # check, if a package remained and only then take the result
         if no_debug_pkgs:
             found_pkgs = no_debug_pkgs
 
         # filter the found packages by the user options
         if conan_options:
-            found_pkgs = list(filter(lambda pkg: conan_options.items()
-                              <= pkg.get("options", {}).items(), found_pkgs))
+            found_pkgs = list(filter(lambda pkg: 
+                        conan_options.items() <= pkg.get("options", {}).items(), 
+                        found_pkgs))
             if not found_pkgs:
                 return found_pkgs
         # get a set of existing options and reduce default options with them
@@ -212,8 +224,9 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             default_str_options: Dict[str, str] = dict([key, str(value)]
                                                        for key, value in default_options.items())
             if len(found_pkgs) > 1:
-                comb_opts_pkgs = list(filter(lambda pkg: default_str_options.items() <=
-                                             pkg.get("options", {}).items(), found_pkgs))
+                comb_opts_pkgs = list(filter(lambda pkg: 
+                            default_str_options.items() <= pkg.get("options", {}).items(), 
+                            found_pkgs))
                 if comb_opts_pkgs:
                     found_pkgs = comb_opts_pkgs
 
@@ -222,13 +235,14 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         if len(found_pkgs) > 1:
             same_comp_pkgs = list(filter(lambda pkg:
                                          default_settings.get("compiler", "") ==
-                                         pkg.get("settings", {}).get("compiler", ""), found_pkgs))
+                                         pkg.get("settings", {}).get("compiler", ""), 
+                                         found_pkgs))
             if same_comp_pkgs:
                 found_pkgs = same_comp_pkgs
 
             same_comp_version_pkgs = list(filter(lambda pkg:
-                                                 default_settings.get("compiler.version", "") ==
-                                                 pkg.get("settings", {}).get("compiler.version", ""), found_pkgs))
+                default_settings.get("compiler.version", "") == pkg.get("settings", {}).get("compiler.version", ""),
+                 found_pkgs))
             if same_comp_version_pkgs:
                 found_pkgs = same_comp_version_pkgs
         return found_pkgs

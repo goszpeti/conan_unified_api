@@ -102,9 +102,20 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             deps_graph = self._conan.info(str(conan_ref))
             # ugly hack, but sadly no other way to do this
             from conans.client.command import CommandOutputer
-            return CommandOutputer(self._conan.out, self._client_cache)._grab_info_data(
+            infos: List[Dict[str, Any]] = CommandOutputer(self._conan.out, self._client_cache)._grab_info_data(
                 deps_graph[0], True)
-
+            # insert original ref as 0th element
+            own_info = {}
+            for info in infos:
+                if conan_ref == self.generate_canonical_ref(ConanRef.loads(info.get("reference", ""))):
+                    own_info = info
+                    break
+            if not own_info:
+                raise ConanException("Can't find own reference in info list!")
+            infos.remove(own_info)
+            infos.insert(0, own_info)
+            return infos
+            
     def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = []) -> Dict[str, Any]:
         with save_sys_path():  # can change path
             # cast from ordered dict
@@ -272,9 +283,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def disable_remote(self, remote_name: str, disabled: bool):
         self._conan.remote_set_disabled_state(remote_name, disabled)
 
-    def update_remote(self, remote_name: str, url: str, verify_ssl: bool, disabled: bool,
-                      index: Optional[int]):
-        self.disable_remote(remote_name, disabled)
+    def update_remote(self, remote_name: str, url: str, verify_ssl: bool,
+                      index: Optional[int] = None):
         self._conan.remote_update(remote_name, url, verify_ssl, index)
 
     def login_remote(self, remote_name: str, user_name: str, password: str):

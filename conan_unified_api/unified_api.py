@@ -176,7 +176,17 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def get_remotes(self, include_disabled=False) -> List[Remote]:
-        """ Return a list of all remotes. """
+        """ Return a list of all remotes as objects """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_remote_names(self, include_disabled=False) -> List[str]:
+        """ Return a list of all remote names """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_remote(self, remote_name: str) -> Optional[Remote]:
+        """ Get info of one remote. Returns None on not existing remote. """
         raise NotImplementedError
 
     @abstractmethod
@@ -196,13 +206,18 @@ class ConanUnifiedApi():
     
     @abstractmethod
     def update_remote(self, remote_name: str, url: str, verify_ssl: bool, 
-                      disabled: bool, index: Optional[int]):
-        """ Update a remote with new information and reorder with index  """
+                      index: Optional[int]=None):
+        """ Update a remote with new information and reorder with index.
+        The Remote object is immutable, so we have to get every field separatly.
+        The name can't be changed with this, only with rename.
+        """
         raise NotImplementedError
     
     @abstractmethod
     def disable_remote(self, remote_name: str, disabled: bool):
-        """ Enable or disable a remote """
+        """
+        Setting disabled to true disables the remote, settings to false enables it.
+        """
         raise NotImplementedError
 
     @abstractmethod

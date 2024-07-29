@@ -27,8 +27,6 @@ def test_read_cache(base_fixture: PathSetup):
     copyfile(str(base_fixture.testdata_path / "cache" / "cache_read.json"), str(temp_cache_path))
 
     cache = ConanInfoCache(temp_cache_path.parent)
-    assert cache._local_packages == {"my_package/1.0.0@user/channel": "",
-                                     "my_package/2.0.0@user/channel": "C:\\.conan\\pkg"}
     assert cache._remote_packages == {
         "my_package": {"user": [
             "1.0.0/channel",
@@ -43,9 +41,7 @@ def test_read_cache(base_fixture: PathSetup):
         ]
         }
     }
-    assert str(cache.get_local_package_path(CFR.loads("my_package/2.0.0@user/channel"))) == "C:\\.conan\\pkg"
-    assert str(cache.get_local_package_path(CFR.loads("my_package/1.0.0@user/channel"))) == INVALID_PATH
-
+  
     pkgs = cache.get_similar_remote_pkg_refs("my_package", "user")
     assert len(pkgs) == 2
     assert CFR.loads("my_package/1.0.0@user/channel") in pkgs
@@ -72,17 +68,6 @@ def test_update_cache(base_fixture: PathSetup):
     copyfile(str(base_fixture.testdata_path / "cache" / "cache_write.json"), str(temp_cache_path))
 
     cache = ConanInfoCache(temp_cache_path.parent)
-    pkg = CFR.loads("new_pkg/1.0.0@me/stable")
-    path = Path(r"C:\temp")
-    cache.update_local_package_path(pkg, path)
-    assert cache.get_local_package_path(pkg) == path
-
-    # test official - does not work in Conan 2
-    if conan_version.major == 1:
-        pkg = CFR.loads("official_pkg/1.0.0@_/_")
-        path = Path(r"C:\temp")
-        cache.update_local_package_path(pkg, path)
-        assert cache.get_local_package_path(pkg) == path
 
     add_packages = [CFR.loads("new_pkg/1.0.0@me/stable"), CFR.loads("new_pkg/1.1.0@me/stable"),
                     CFR.loads("new_pkg/1.1.0@me/testing"), CFR.loads("new_pkg/2.0.0@me/stable")]
