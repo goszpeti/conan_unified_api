@@ -3,25 +3,35 @@ import pytest
 from test import TEST_REF, TEST_REF_OFFICIAL, TEST_REMOTE_NAME
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
+from conan_unified_api import conan_version
 from conan_unified_api.types import ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
 
 
+@pytest.mark.conanv1  # TEST_REF_OFFICIAL is invalid for conan2
 def test_info_simple(conan_api: ConanUnifiedApi):
     # ref needs to be in a remote
-    info = conan_api.info(TEST_REF_OFFICIAL)
+    ref = ConanRef.loads(TEST_REF_OFFICIAL.split("@")[0])
+    info = conan_api.info(ref)
     assert len(info) == 1
-    assert info[0].get("binary_remote") == "local"
-    assert info[0].get("reference") == TEST_REF_OFFICIAL.split("@")[0]
+    if conan_version.major == 1:
+        assert info[0].get("binary_remote") == "local"
+        assert info[0].get("reference") == TEST_REF_OFFICIAL.split("@")[0]
+    elif conan_version.major == 2:  # binary_remote is usually None and reference does not work
+        assert info[0].get("name") == ref.name
 
 
 def test_info_transitive_reqs(conan_api: ConanUnifiedApi):
     info = conan_api.info("nocompsettings/1.0.0@local/no_sets")
     assert len(info) == 2
-    assert info[0].get("binary_remote") == TEST_REMOTE_NAME
-    assert info[0].get("reference") == "nocompsettings/1.0.0@local/no_sets"
 
-    assert info[1].get("reference") == TEST_REF
+    if conan_version.major == 1:
+        assert info[0].get("binary_remote") == TEST_REMOTE_NAME
+        assert info[0].get("reference") == "nocompsettings/1.0.0@local/no_sets"
+
+        assert info[1].get("reference") == TEST_REF
+    #elif conan_version.major == 2:  # binary_remote is usually None and reference does not work
+    #    assert info[0].get("name") == ref.name
 
 def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
     """
@@ -33,7 +43,7 @@ def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
     default_settings = conan_api.get_default_settings()
 
     pkgs, remote = conan_api.find_best_matching_package_in_remotes(ConanRef.loads(TEST_REF),
-                                                        {"shared": "True"})
+                                                                   {"shared": "True"})
     assert remote == TEST_REMOTE_NAME
     assert len(pkgs) > 0
     pkg = pkgs[0]
@@ -41,7 +51,7 @@ def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
 
     for setting in default_settings:
         if setting in pkg.get("settings", {}).keys():
-            if "compiler." in setting: # don't evaluate comp. details
+            if "compiler." in setting:  # don't evaluate comp. details
                 continue
             assert default_settings[setting] in pkg.get("settings", {})[setting]
 
@@ -53,7 +63,7 @@ def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanUnifiedApi):
     """
     conan_remove_ref(TEST_REF)
     pkg, remote = conan_api.find_best_matching_package_in_remotes(ConanRef.loads(TEST_REF),
-                                                      {"BogusOption": "True"})
+                                                                  {"BogusOption": "True"})
     assert not pkg
 
 
@@ -65,7 +75,7 @@ def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
     conan_remove_ref(TEST_REF)
     conan_install_ref(TEST_REF)
     pkgs = conan_api.find_best_matching_packages(ConanRef.loads(TEST_REF))
-    assert len(pkgs) == 1 # default options are filtered
+    assert len(pkgs) == 1  # default options are filtered
 
 # @pytest.mark.conanv2 TODO create package for it
 
@@ -77,7 +87,7 @@ def test_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     """
     ref = "nocompsettings/1.0.0@local/no_sets"
     conan_remove_ref(ref)
-    capfd.readouterr() # remove can result in error message - clear
+    capfd.readouterr()  # remove can result in error message - clear
 
     id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(ref))
     assert (package_folder / "bin").is_dir()

@@ -91,24 +91,29 @@ class ConanUnifiedApi():
     def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
         """
         Calls the conan info method on Conan V1 to return all recipe and pacakges metainfo (including paths.)
-        for the recipe itself and all the dependencies. The order is random. TODO: Make orig. ref 1st
+        for the recipe itself and all the dependencies. The order is random.
         For the ConanV2 version it calls graph info, which is the best equivalent method.
+        Original remote argument ommitted. To download a conanfile from a specific remote
+        please use inspect with remote argument.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], remote_name: Optional[str]=None,
-                ) -> Dict[str, Any]:
-        """ Get a field of the selected conanfile. Works currently only with a reference, but not with a path. """
+    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], 
+                remote_name: Optional[str]=None) -> Dict[str, Any]:
+        """ 
+        Get a field of the selected conanfile. Works currently only with a reference, but not with a path. 
+        Recreates the ConanV1 behavior for ConanV2.
+        If attributes is empty in ConanV1 a chosen default fields are returned, in ConanV2 all of them.
+        If attributes is set, only the selected will be returned in the dict.
+
+        """
         raise NotImplementedError
 
     @abstractmethod
     def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
         """ Creates an alias for the target ref with all local packages. For ConanV1 only. """
         raise NotImplementedError
-
-    # @abstractmethod
-    # def copy(self, conan_ref: Union[ConanRef, str], conan_target_ref):
 
     @abstractmethod
     def remove_locks(self):

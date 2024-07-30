@@ -2,7 +2,7 @@ from contextlib import redirect_stderr, redirect_stdout
 import logging
 import os
 from pathlib import Path
-from tempfile import gettempdir
+from tempfile import gettempdir, mkdtemp
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Self
 from unittest.mock import patch
@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from conan.internal.cache.cache import PkgCache as ClientCache
     from .cache.conan_cache import ConanInfoCache
     from conan.internal.cache.home_paths import HomePaths  # type: ignore
+
+### FIXME: Many commands spam the log... 
 
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     """ Wrapper around ConanAPIV2 """
@@ -61,31 +63,35 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     ### General commands ###
 
     def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
-        path = conan_api.local.get_conanfile_path(
-            args.path, cwd, py=None) if args.path else None
-
-        # Basic collaborators, remotes, lockfile, profiles
-        remotes = conan_api.remotes.list(args.remote) if not args.no_remote else []
-        overrides = eval(args.lockfile_overrides) if args.lockfile_overrides else None
-        lockfile = conan_api.lockfile.get_lockfile(lockfile=args.lockfile,
-                                                   conanfile_path=path,
-                                                   cwd=cwd,
-                                                   partial=args.lockfile_partial,
-                                                   overrides=overrides)
-        profile_host, profile_build = conan_api.profiles.get_profiles_from_args(args)
-
-        if path:
-            deps_graph = conan_api.graph.load_graph_consumer(path, args.name, args.version,
-                                                             args.user, args.channel,
-                                                             profile_host, profile_build, lockfile,
-                                                             remotes, args.update,
-                                                             check_updates=args.check_updates,
-                                                             is_build_require=args.build_require)
-        else:
-            deps_graph = conan_api.graph.load_graph_requires(args.requires, args.tool_requires,
-                                                             profile_host, profile_build, lockfile,
-                                                             remotes, args.update,
-                                                             check_updates=args.check_updates)
+        # TODO: try to merge with install reference code
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
+        remotes = self._conan.remotes.list(None)
+        profiles = []
+        profile_host = self._conan.profiles.get_profile(profiles, 
+                                    settings=[], options=[])
+        requires = [conan_ref]
+        update = False
+        deps_graph = self._conan.graph.load_graph_requires(requires, None, 
+                        profile_host, profile_host, None, remotes, update)
+        # this modifies deps_graph
+        self._conan.graph.analyze_binaries(deps_graph, build_mode=None, remotes=remotes,
+                                   update=update, lockfile=None)
+        
+        # prepare output and convert to dict
+        nodes = deps_graph.nodes
+        nodes.pop(0)  # remove cli node
+        results = []
+        for node in nodes:
+            result_dict = {}
+            for attr in dir(node):
+                if attr.startswith("_"): # only public fields
+                    continue
+                try:
+                    result_dict[attr] = getattr(node, attr)
+                except Exception:
+                    continue
+            results.append(result_dict)
+        return results
 
     def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], 
                 remote_name: Optional[str] =None) -> Dict[str, Any]:
@@ -94,6 +100,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         remotes = self.get_remotes()
         if remote_name:
             remotes = [self.get_remote(remote_name)]
+
         path = self.get_conanfile_path(conan_ref)
         conanfile = self._conan.local.inspect(str(path), remotes=remotes, lockfile=None,
                                               name=conan_ref.name, version=conan_ref.version,
@@ -109,6 +116,21 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 continue
         # no serialization, like in ConanV1
         return result
+
+    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
+        # TODO does not seem to copy the package yet
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
+        conan_target_ref = self.conan_ref_from_reflike(conan_target_ref)
+
+        template = self._conan.new.get_builtin_template("alias")
+        content = self._conan.new.render(template, {
+            "name": conan_ref.name,
+            "version": conan_ref.version,
+            "target": conan_target_ref.version})
+        conanfile_path = Path(mkdtemp()) / "conanfile_temp.py"
+        conanfile_path.write_text(content.get("conanfile.py", ""))
+        self._conan.export.export(str(conanfile_path), conan_ref.name,
+                                  conan_ref.version, conan_ref.user, conan_ref.channel)
 
     def remove_locks(self):
         pass  # command does not exist

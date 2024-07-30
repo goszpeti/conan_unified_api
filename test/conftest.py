@@ -15,12 +15,15 @@ import psutil
 import pytest
 from conan_unified_api import base_path, ConanInfoCache, ConanApiFactory
 from conan_unified_api import conan_version
-from test import SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_OFFICIAL, TEST_REMOTE_NAME, TEST_REMOTE_URL, PathSetup, is_ci_job
-from test.conan_helper import add_remote, clean_remotes_on_ci, conan_create_and_upload, create_test_ref, get_profiles, login_test_remote
+from test import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_OFFICIAL,
+                  TEST_REMOTE_NAME, TEST_REMOTE_URL, PathSetup, is_ci_job)
+from test.conan_helper import (add_remote, clean_remotes_on_ci,
+                               conan_create_and_upload, get_profiles, login_test_remote)
 import test.conan_helper
 
 exe_ext = ".exe" if platform.system() == "Windows" else ""
 conan_server_thread = None
+
 
 def pytest_report_teststatus(report, config):
     if report.when == 'call':
@@ -73,6 +76,7 @@ def repo_paths() -> Generator[PathSetup, None, None]:
     paths = PathSetup()
     yield paths
     # Teardown
+
 
 def check_if_process_running(process_name, kill=False, cmd_narg=1, timeout_s=10) -> bool:
     start_time = datetime.now()
@@ -166,17 +170,37 @@ def create_test_data(paths):
 
     for profile in get_profiles():
         profile_path = profiles_path / profile
+
+        # create test pkgs
         create_test_ref(TEST_REF, paths, [f"-pr {str(profile_path)}",
-                                          f"-o shared=False -pr {str(profile_path)}"], update=True)
+                                          f"-o shared=False -pr {str(profile_path)}"])
         create_test_ref(TEST_REF_OFFICIAL, paths, [
-                        f"-pr {str(profile_path)}"], update=True)
-        if not conan_version.major == 2:
-            paths = PathSetup()
-            conanfile = str(paths.testdata_path / "conan" / "conanfile_no_settings.py")
-            conan_create_and_upload(conanfile,  "nocompsettings/1.0.0@local/no_sets")
+                        f"-pr {str(profile_path)}"])
+
+        # create no settings pkgs
+        if conan_version.major == 1:
+            conanfile_path = str(paths.testdata_path / "conan" /
+                                 "conanfile_no_settings.py")
+        else:
+            conanfile_path = str(paths.testdata_path / "conan" /
+                                 "conanfile_no_settingsV2.py")
+        conan_create_and_upload(conanfile_path,  "nocompsettings/1.0.0@local/no_sets")
+
+    # create a 1000 pkgs..
     # conan = ConanApi()
     # conan.init_api()
     # for i in range(9, 1000):
     #     print(f"Aliasing wiht index {i}")
     #     conan.alias(f"example/9.9.{i}@local/alias", TEST_REF)
     #     # os.system(f"conan alias example/9.9.{i}@local/alias {TEST_REF}")
+
+
+def create_test_ref(ref, paths, create_params=[""]):
+    if conan_version.major == 2:
+        ref = ref.replace("@_/_", "")  # does not work anymore...
+    conanfile = str(paths.testdata_path / "conan" / "conanfile.py")
+    if conan_version.major == 2:
+        conanfile = str(paths.testdata_path / "conan" / "conanfileV2.py")
+
+    for param in create_params:
+        conan_create_and_upload(conanfile, ref, param)

@@ -61,27 +61,6 @@ def conan_create_and_upload(conanfile: str, ref: str, create_params=""):
         os.system(f"conan upload {ref} -r {TEST_REMOTE_NAME} --force")
 
 
-def create_test_ref(ref, paths, create_params=[""], update=False):
-    if conan_version.major == 2:
-        ref = ref.replace("@_/_", "")  # does not work anymore...
-    # native_ref = str(ConanRef.loads(ref))
-    # conan = ConanApi()
-    # conan.init_api()
-
-    # pkgs = conan.search_recipes_in_remotes(native_ref)
-
-    # if not update:
-    #     for pkg in pkgs:
-    #         if str(pkg) == native_ref:
-    #             return
-    conanfile = str(paths.testdata_path / "conan" / "conanfile.py")
-    if conan_version.major == 2:
-        conanfile = str(paths.testdata_path / "conan" / "conanfileV2.py")
-
-    for param in create_params:
-        conan_create_and_upload(conanfile, ref, param)
-
-
 def add_remote(remote_name, url):
     if TESTED_ADD_REMOVE_REMOTE:
         try:

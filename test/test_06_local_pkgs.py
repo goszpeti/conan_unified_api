@@ -1,4 +1,5 @@
 
+import pytest
 from test import TEST_REF, TEST_REMOTE_NAME
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
@@ -14,11 +15,11 @@ def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF, ["no_copy_source"], TEST_REMOTE_NAME)
     assert inspect["no_copy_source"] == True
 
-
+pytest.mark.skip # not finished yet
 def test_alias(conan_api: ConanUnifiedApi):
-    pass
-    #def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
-
+    alias_ref = "example/1.1.1@user/new_channel"
+    conan_api.alias(alias_ref, TEST_REF)
+    assert conan_api.get_local_pkgs_from_ref(ConanRef.loads(alias_ref))
 
 def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
     """

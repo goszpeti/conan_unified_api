@@ -1,9 +1,8 @@
-from typing import Optional
-from conans import ConanFile
-import platform
+from conan import ConanFile
 import sys
 import os
 from pathlib import Path
+from conan.tools.files import copy
 
 class Example(ConanFile):
     name = "nocompsettings"
@@ -15,4 +14,4 @@ class Example(ConanFile):
 
     def package(self):
         # repackage some executable
-        self.copy(Path(sys.executable).name, src=os.path.dirname(sys.executable), dst="bin")
+        copy(self, Path(sys.executable).name, src=os.path.dirname(sys.executable), dst="bin")
