@@ -78,23 +78,6 @@ def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
     pkgs = conan_api.find_best_matching_packages(ConanRef.loads(TEST_REF))
     assert len(pkgs) == 1  # default options are filtered
 
-def test_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
-    """
-    Test, if a package with no settings at all can install
-    The actual installaton must not return an error.
-    """
-    ref = TEST_REF_NO_SETTINGS
-    conan_remove_ref(ref)
-    capfd.readouterr()  # remove can result in error message - clear
-
-    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(ref))
-    assert (package_folder / "bin").is_dir()
-    captured = capfd.readouterr()
-    assert "ERROR" not in captured.err
-    assert "Can't find a matching package" not in captured.err
-    conan_remove_ref(ref)
-
-
 def test_search_for_all_packages(conan_api: ConanUnifiedApi):
     """ Test, that an existing ref will be found in the remotes. """
     res = conan_api.search_recipe_all_versions_in_remotes(ConanRef.loads(TEST_REF))

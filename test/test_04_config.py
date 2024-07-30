@@ -35,7 +35,7 @@ def test_get_config_entry(conan_api: ConanUnifiedApi):
                 value = line.split("=")[1].strip()
                 configs[name] = value
         config_entry_name = "core:non_interactive"
-        if config_entry_name not in config:
+        if config_entry_name not in configs:
             config += f"\n{config_entry_name}=True\n"
             conan_api.get_config_file_path().write_text(config)
     conan_api.init_api() # reads config only on init

@@ -98,7 +98,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
         with save_sys_path():  # can change path
-            deps_graph = self._conan.info(str(conan_ref))
+            canonical_ref = self.generate_canonical_ref(conan_ref)
+            deps_graph = self._conan.info(canonical_ref)
             # ugly hack, but sadly no other way to do this
             from conans.client.command import CommandOutputer
             infos: List[Dict[str, Any]] = CommandOutputer(self._conan.out, self._client_cache)._grab_info_data(
@@ -106,7 +107,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             # insert original ref as 0th element
             own_info = {}
             for info in infos:
-                if conan_ref == self.generate_canonical_ref(ConanRef.loads(info.get("reference", ""))):
+                if canonical_ref == self.generate_canonical_ref(ConanRef.loads(info.get("reference", ""))):
                     own_info = info
                     break
             if not own_info:
@@ -122,7 +123,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             return dict(self._conan.inspect(str(conan_ref), attributes=attributes, 
                                             remote_name=remote_name))
 
-    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref):
+    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
         self._conan.export_alias(str(conan_ref), conan_target_ref)
 
     def get_profiles(self) -> List[str]:
