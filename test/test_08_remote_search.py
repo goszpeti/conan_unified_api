@@ -16,13 +16,12 @@ def test_info_simple(conan_api: ConanUnifiedApi):
 
 
 def test_info_transitive_reqs(conan_api: ConanUnifiedApi):
-    # TODO: let's hope it does not change on the server... 
-    info = conan_api.info("pybind11/2.12.0")
-    assert len(info) == 1
-    assert info[0].get("binary_remote") == "conancenter"
-    assert info[0].get("reference") == "pybind11/2.12.0"
+    info = conan_api.info("nocompsettings/1.0.0@local/no_sets")
+    assert len(info) == 2
+    assert info[0].get("binary_remote") == TEST_REMOTE_NAME
+    assert info[0].get("reference") == "nocompsettings/1.0.0@local/no_sets"
 
-    assert info[1].get("reference") == "pybind11/2.12.0" # TODO
+    assert info[1].get("reference") == TEST_REF
 
 
 @pytest.mark.conanv1
@@ -67,7 +66,7 @@ def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanUnifiedApi):
     Empty list must be returned and the error be logged.
     """
     conan_remove_ref(TEST_REF)
-    pkg = conan_api.find_best_matching_package_in_remotes(ConanRef.loads(TEST_REF),
+    pkg, remote = conan_api.find_best_matching_package_in_remotes(ConanRef.loads(TEST_REF),
                                                       {"BogusOption": "True"})
     assert not pkg
 

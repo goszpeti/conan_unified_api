@@ -86,7 +86,7 @@ def add_remote(remote_name, url):
     if TESTED_ADD_REMOVE_REMOTE:
         try:
             conan_api.add_remote(remote_name, url, False) # only local remotes
-        except Exception: # already added
+        except Exception as e: # already added
             pass
         return
     if conan_version.major == 1:
