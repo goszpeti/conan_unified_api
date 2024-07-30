@@ -112,7 +112,7 @@ jobs:
           CONAN_VERSION: ${{ matrix.conan}}
       - name: Execute unitests with pytest
         run: >-
-          pytest -v test/01_unit --junit-xml=./results/result-unit-${{matrix.name}}.xml
+          pytest -v test --junit-xml=./results/result-unit-${{matrix.name}}.xml
           --cov=conan_unified_api --cov-branch --cov-append --capture=no ${{matrix.pytest_args}}
       - name: Upload Test results
         uses: actions/upload-artifact@v3 # TODO: v4 does not support overwrite anymore
