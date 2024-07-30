@@ -115,10 +115,12 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             infos.insert(0, own_info)
             return infos
             
-    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = []) -> Dict[str, Any]:
+    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [],
+                remote_name: Optional[str] = None) -> Dict[str, Any]:
         with save_sys_path():  # can change path
             # cast from ordered dict
-            return dict(self._conan.inspect(str(conan_ref), attributes=attributes))
+            return dict(self._conan.inspect(str(conan_ref), attributes=attributes, 
+                                            remote_name=remote_name))
 
     def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref):
         self._conan.export_alias(str(conan_ref), conan_target_ref)
@@ -298,8 +300,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     ### Install related methods ###
 
     def install_reference(self, conan_ref: ConanRef, conan_settings: Optional[ConanSettings] = None,
-                          conan_options: Optional[ConanOptions] = None, profile="", update=True,
-                          generators: List[str] = [], remote_name: Optional[str] = None) -> Tuple[ConanPackageId, ConanPackagePath]:
+            conan_options: Optional[ConanOptions] = None, profile="", update=True,
+            generators: List[str] = [], remote_name: Optional[str] = None
+        ) -> Tuple[ConanPackageId, ConanPackagePath]:
+
         package_id = ""
         if conan_options is None:
             conan_options = {}
@@ -360,11 +364,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 f"Can't read conanbuildinfo.txt for '<b>{str(conan_ref)}</b>': {str(e)}")
         return content
 
-    def get_options_with_default_values(self, conan_ref: ConanRef) -> Tuple[ConanAvailableOptions, ConanOptions]:
+    def get_options_with_default_values(self, conan_ref: ConanRef, 
+        remote_name: Optional[str] = None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         default_options = {}
         available_options = {}
         try:
-            inspect = self.inspect(self.generate_canonical_ref(conan_ref))
+            inspect = self.inspect(self.generate_canonical_ref(
+                conan_ref), remote_name=remote_name)
             default_options = inspect.get("default_options", {})
             available_options = inspect.get("options", {})
         except Exception as e:

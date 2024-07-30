@@ -91,7 +91,8 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = []) -> Dict[str, Any]:
+    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], remote_name: Optional[str]=None,
+                ) -> Dict[str, Any]:
         """ Get a field of the selected conanfile. Works currently only with a reference, but not with a path. """
         raise NotImplementedError
 
@@ -286,8 +287,8 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_options_with_default_values(self,
-                                        conan_ref: ConanRef) -> Tuple[ConanAvailableOptions, ConanOptions]:
+    def get_options_with_default_values(self, conan_ref: ConanRef, 
+         remote_name: Optional[str]=None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         """ Return the available options and their default values as dict."""
         raise NotImplementedError
 

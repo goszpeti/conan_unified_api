@@ -212,7 +212,8 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             min_opts_list = min_opts_set.pop()
 
         # this calls external code of the recipe
-        _, default_options = self.get_options_with_default_values(conan_ref)
+        _, default_options = self.get_options_with_default_values(
+            conan_ref, remote_name)
 
         if default_options:
             default_options = dict(

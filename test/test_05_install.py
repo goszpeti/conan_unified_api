@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from test import TEST_REF, TEST_REF_OFFICIAL
+from test import TEST_REF, TEST_REF_OFFICIAL, TEST_REMOTE_NAME
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
 from conan_unified_api import ConanApiFactory as ConanApi
@@ -44,7 +44,9 @@ def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
         assert (package_folder / "bin" / "python").is_file()
 
 # @pytest.mark.conanv2 TODO: Create v2 compatible testcase
-def test_install_with_any_settings(mocker, capfd):
+
+
+def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
     """
     Test, if a package with <setting>=Any flags can install
     The actual installaton must not return an error.
@@ -52,11 +54,10 @@ def test_install_with_any_settings(mocker, capfd):
     # mock the remote response
     conan_remove_ref(TEST_REF)
     # Create the "any" package
-    conan = ConanApi().init_api()
-    assert conan.install_package(ConanRef.loads(TEST_REF), {
+    assert conan_api.install_package(ConanRef.loads(TEST_REF), {
         'id': '325c44fdb228c32b3de52146f3e3ff8d94dddb60', 'options': {},
         'settings': {'arch_build': 'any', 'os_build': 'Linux', "build_type": "ANY"},
-        'requires': [], 'outdated': False},)
+        'requires': [], 'outdated': False}, False, TEST_REMOTE_NAME)
     captured = capfd.readouterr()
     assert "ERROR" not in captured.err
     assert "Cannot install package" not in captured.err
