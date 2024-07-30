@@ -107,6 +107,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                                               user=conan_ref.user, channel=conan_ref.channel)
         result = {}
         for attr in dir(conanfile):
+            if attr.startswith("_"): # only public fields
+                continue
             if attributes:
                 if attr not in attributes:
                     continue
@@ -451,8 +453,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 break
         return found_package
 
-    def get_local_pkgs_from_ref(self, conan_ref: ConanRef) -> List[ConanPkg]:
+    def get_local_pkgs_from_ref(self, conan_ref: Union[ConanRef, str]) -> List[ConanPkg]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         result: List[ConanPkg] = []
+
         if conan_ref.user == "_":
             conan_ref.user = None
         if conan_ref.channel == "_":

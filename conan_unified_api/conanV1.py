@@ -392,7 +392,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_all_local_refs(self) -> List[ConanRef]:
         return self._client_cache.all_refs()  # type: ignore
 
-    def get_local_pkgs_from_ref(self, conan_ref: ConanRef) -> List[ConanPkg]:
+    def get_local_pkgs_from_ref(self, conan_ref: Union[ConanRef, str]) -> List[ConanPkg]:
         result: List[ConanPkg] = []
         response = {}
         try:

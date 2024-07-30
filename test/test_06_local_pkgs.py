@@ -1,6 +1,6 @@
 
 import pytest
-from test import TEST_REF, TEST_REMOTE_NAME
+from test import TEST_REF, TEST_REMOTE_NAME, test_ref_obj
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
 from conan_unified_api.types import ConanRef
@@ -9,6 +9,11 @@ from conan_unified_api.unified_api import ConanUnifiedApi
 
 def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF)
+    assert inspect.get("name") == ConanRef.loads(TEST_REF).name
+    assert inspect.get("generators") == ("CMakeDeps", "CMakeToolchain")
+
+    # objects are not identical -> compare arbitrary values 
+    inspect == conan_api.inspect(test_ref_obj)
     assert inspect.get("name") == ConanRef.loads(TEST_REF).name
     assert inspect.get("generators") == ("CMakeDeps", "CMakeToolchain")
 
@@ -36,17 +41,25 @@ def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
 def test_get_export_folder(conan_api: ConanUnifiedApi):
     conan_install_ref(TEST_REF)
     assert (conan_api.get_export_folder(TEST_REF) / "conanfile.py").exists()
+    assert (conan_api.get_export_folder(test_ref_obj) / "conanfile.py").exists()
 
 
-#     @abstractmethod
-#     def get_conanfile_path(self, conan_ref: ConanRef) -> Path:
-#         """ Get local conanfile path. If it is not localy available, download it."""
-#         raise NotImplementedError
+def test_get_conanfile_path(conan_api: ConanUnifiedApi):
+    conanfile_path = conan_api.get_conanfile_path(TEST_REF)
+    assert conanfile_path.is_file()
+    assert conanfile_path.name == "conanfile.py"
+    assert conanfile_path == conan_api.get_conanfile_path(test_ref_obj)
 
-#     @abstractmethod
-#     def get_package_folder(self, conan_ref: ConanRef, package_id: str) -> ConanPackagePath:
-#         " Get the fully resolved pkg path from the ref and the specific package (id) "
-#         raise NotImplementedError
+
+def test_get_local_pkgs_from_ref(conan_api: ConanUnifiedApi):
+    pkgs = conan_api.get_local_pkgs_from_ref(TEST_REF)
+    assert pkgs # TODO
+
+
+def test_get_package_folder(conan_api: ConanUnifiedApi):
+    pkgs = conan_api.get_local_pkgs_from_ref(TEST_REF)
+    pkg_path = conan_api.get_package_folder(TEST_REF, pkgs[0].get("id", ""))
+    assert pkg_path.exists() # TODO
 
 # @abstractmethod
 # def remove_reference(self, conan_ref: ConanRef, pkg_id: str = ""):
@@ -71,10 +84,6 @@ def test_get_export_folder(conan_api: ConanUnifiedApi):
 #     """ Returns all locally installed conan references """
 #     raise NotImplementedError
 
-# @abstractmethod
-# def get_local_pkgs_from_ref(self, conan_ref: ConanRef) -> List[ConanPkg]:
-#     """ Returns all installed pkg ids for a reference. """
-#     raise NotImplementedError
 
 # @abstractmethod
 # def get_local_pkg_from_id(self, pkg_ref: ConanPkgRef) -> ConanPkg:

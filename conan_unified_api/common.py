@@ -131,7 +131,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 return package
         return {"id": ""}
 
-    def get_local_pkg_from_path(self, conan_ref: ConanRef, path: Path):
+    def get_local_pkg_from_path(self, conan_ref: Union[ConanRef, str], path: Path):
         """ For reverse lookup - give info from path """
         found_package = None
         for package in self.get_local_pkgs_from_ref(conan_ref):

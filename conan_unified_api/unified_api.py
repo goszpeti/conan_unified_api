@@ -358,7 +358,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_local_pkgs_from_ref(self, conan_ref: ConanRef) -> List[ConanPkg]:
+    def get_local_pkgs_from_ref(self, conan_ref: Union[ConanRef, str]) -> List[ConanPkg]:
         """ Returns all installed pkg ids for a reference. """
         raise NotImplementedError
 
@@ -368,7 +368,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_local_pkg_from_path(self, conan_ref: ConanRef, path: Path):
+    def get_local_pkg_from_path(self, conan_ref: Union[ConanRef, str], path: Path):
         """ For reverse lookup - give info from path """
         raise NotImplementedError
 

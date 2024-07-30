@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from conan_unified_api import ConanApiFactory
 from conan_unified_api.base.helper import str2bool
+from conan_unified_api.types import ConanRef
 
 
 ###### Global singleton test object ######
@@ -27,6 +28,7 @@ conan_api = ConanApiFactory()
 
 
 TEST_REF = "example/9.9.9@local/testing"
+test_ref_obj = ConanRef.loads(TEST_REF)
 TEST_REF_OFFICIAL = "example/1.0.0@_/_"
 TEST_REF_NO_SETTINGS = "nocompsettings/1.0.0@local/no_sets"
 SKIP_CREATE_CONAN_TEST_DATA = str2bool(
