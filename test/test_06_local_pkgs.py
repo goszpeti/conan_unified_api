@@ -15,7 +15,7 @@ def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF, ["no_copy_source"], TEST_REMOTE_NAME)
     assert inspect["no_copy_source"] == True
 
-pytest.mark.skip # not finished yet
+pytest.mark.skip() # not finished yet
 def test_alias(conan_api: ConanUnifiedApi):
     alias_ref = "example/1.1.1@user/new_channel"
     conan_api.alias(alias_ref, TEST_REF)

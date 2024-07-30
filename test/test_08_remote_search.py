@@ -11,6 +11,7 @@ from conan_unified_api.unified_api import ConanUnifiedApi
 def test_info_simple(conan_api: ConanUnifiedApi):
     # ref needs to be in a remote
     ref = ConanRef.loads(TEST_REF_OFFICIAL.split("@")[0])
+    conan_api.inspect(ref)
     info = conan_api.info(ref)
     assert len(info) == 1
     if conan_version.major == 1:
