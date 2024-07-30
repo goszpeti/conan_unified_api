@@ -39,7 +39,7 @@ def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
     elif platform.system() == "Linux":
         assert (package_folder / "bin" / "python").is_file()
 
-@pytest.mark.conanv1
+
 def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
     """
     Test, if a package with <setting>=Any flags can install
@@ -58,7 +58,6 @@ def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
     assert "ERROR" not in captured.err
     assert "Cannot install package" not in captured.err
 
-@pytest.mark.conanv1
 def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     """
     Test, if a package with no settings at all can install
@@ -78,7 +77,7 @@ def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     conan_remove_ref(ref)
 
 
-@pytest.mark.conanv1
+
 def test_conan_get_conan_buildinfo(conan_api: ConanUnifiedApi):
     """
     Check, that get_conan_buildinfo actually retrieves as a string for the linux pkg 

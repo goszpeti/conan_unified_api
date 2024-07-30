@@ -50,7 +50,3 @@ minversion = "6.0"
 testpaths = [
     "test",
 ]
-markers = [
-    "conanv1: mark as working with conan 1.x installed",
-    "conanv2: mark as working with conan 2.x installed"
-]

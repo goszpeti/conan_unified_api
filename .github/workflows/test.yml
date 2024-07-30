@@ -41,49 +41,41 @@ jobs:
             os: ubuntu-20.04
             conan: "<2"
             conan_server: "<2"
-            pytest_args: ""
           - name: "ubuntu20-py39-conan1-latest"
             python: "3.9"
             conan: "<2"
             conan_server: "<2"
             os: ubuntu-20.04
-            pytest_args: ""
           - name: "ubuntu20-py310-conan1-latest"
             python: "3.10"
             conan: "<2"
             conan_server: "<2"
             os: ubuntu-20.04
-            pytest_args: ""
           - name: "windows-py311-conan1-latest"
             python: "3.11"
             os: windows-latest
             conan: "<2"
             conan_server: "<2"
-            pytest_args: ""
           - name: "ubuntu20-py38-conan1.48"
             python: "3.8"
             os: ubuntu-20.04
             conan: "==1.48.0"
             conan_server: "==1.48.0"
-            pytest_args: ""
           - name: "ubuntu22-py310-conan2.3"
             python: "3.10"
             os: ubuntu-22.04
             conan: <2.4
             conan_server: "-server <2.4"
-            pytest_args: "-m conanv2"
           - name: "ubuntu22-py312-conan2-latest"
             python: "3.12"
             os: ubuntu-22.04
             conan: <2.5
             conan_server: "-server <2.5"
-            pytest_args: "-m conanv2"
           - name:  windows-py312-conan2-latest
             python: "3.12"
             os: windows-latest
             conan: <2.5 # latest conan 2
             conan_server: "-server <2.5"
-            pytest_args: "-m conanv2"
     env:
       DISPLAY: ":99.0"
       LC_ALL: "en_US.UTF-8"
@@ -113,7 +105,7 @@ jobs:
       - name: Execute unitests with pytest
         run: >-
           pytest -v test --junit-xml=./results/result-unit-${{matrix.name}}.xml
-          --cov=conan_unified_api --cov-branch --cov-append --capture=no ${{matrix.pytest_args}}
+          --cov=conan_unified_api --cov-branch --cov-append --capture=no
       - name: Upload Test results
         uses: actions/upload-artifact@v3 # TODO: v4 does not support overwrite anymore
         with:

@@ -8,7 +8,6 @@ from conan_unified_api.types import ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
 
 
-@pytest.mark.conanv1  # TEST_REF_OFFICIAL is invalid for conan2
 def test_info_simple(conan_api: ConanUnifiedApi):
     # ref needs to be in a remote
     ref = ConanRef.loads(TEST_REF_OFFICIAL.split("@")[0])
@@ -77,9 +76,6 @@ def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
     conan_install_ref(TEST_REF)
     pkgs = conan_api.find_best_matching_packages(ConanRef.loads(TEST_REF))
     assert len(pkgs) == 1  # default options are filtered
-
-# @pytest.mark.conanv2 TODO create package for it
-
 
 def test_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     """

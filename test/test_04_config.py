@@ -65,7 +65,7 @@ def test_get_storage_path(conan_api: ConanUnifiedApi):
     assert path.is_dir()
     # TODO: Extend test a little bit...
 
-@pytest.mark.conanv1
+
 def test_conan_short_path_root(conan_api: ConanUnifiedApi):
     """ Test, that short path root can be read. """
     if conan_version.major == 2:
