@@ -47,7 +47,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 ### Install related methods ###
 
     def install_package(self, conan_ref: ConanRef, package: ConanPkg,
-                        update=True) -> Tuple[ConanPackageId, ConanPackagePath]:
+                        update=True, remote_name: Optional[str]=None) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan package (id) with the provided extra information.
         Returns the installed id and a valid package path, if installation was succesfull.
@@ -60,7 +60,8 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         settings = package.get("settings", {})
         try:
             installed_id, package_path = self.install_reference(
-                conan_ref, update=update, conan_settings=settings, conan_options=options)
+                conan_ref, update=update, conan_settings=settings, conan_options=options, 
+                remote_name=remote_name)
             if installed_id != package_id:
                 Logger().warning(f"Installed {installed_id} instead of selected {package_id}."
                                  "This can happen, if there transitive settings changed in comparison to the build time.")
@@ -81,19 +82,17 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             Logger().info(
                 f"'<b>{conan_ref}</b>' with options {repr(conan_options)} is not installed. Searching for packages to install...")
 
-        pkg_id, path = self.install_best_matching_package(
-            conan_ref, conan_options, update=update)
+        pkg_id, path = self.install_best_matching_package(conan_ref, conan_options, update=update)
         return pkg_id, path
 
     def install_best_matching_package(self, conan_ref: ConanRef,
                                       conan_options: Optional[ConanOptions] = None,
                                       update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
-        packages: List[ConanPkg] = self.find_best_matching_package_in_remotes(
-            conan_ref, conan_options)
+        packages, remote = self.find_best_matching_package_in_remotes(conan_ref, conan_options)
         if not packages:
             self.info_cache.invalidate_remote_package(conan_ref)
             return ("", Path(INVALID_PATH_VALUE))
-        pkg_id, package_path = self.install_package(conan_ref, packages[0], update)
+        pkg_id, package_path = self.install_package(conan_ref, packages[0], update, remote)
         if package_path.exists():
             return pkg_id, package_path
         return "", Path(INVALID_PATH_VALUE)
@@ -155,17 +154,17 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                     return package
         return {"id": ""}
 
-    def find_best_matching_package_in_remotes(self, conan_ref: ConanRef,
-                                              conan_options: Optional[ConanOptions] = None) -> List[ConanPkg]:
+    def find_best_matching_package_in_remotes(self, conan_ref: ConanRef, 
+            conan_options: Optional[ConanOptions] = None) -> Tuple[List[ConanPkg], str]:
         """ Find a package with options in the remotes """
         for remote in self.get_remotes():
-            packages = self.find_best_matching_packages(
-                conan_ref, conan_options, remote.name)
+            packages = self.find_best_matching_packages(conan_ref, conan_options,
+                                                        remote.name)
             if packages:
-                return packages
+                return (packages, remote.name)
         Logger().info(
             f"Can't find a package '<b>{str(conan_ref)}</b>' with options {conan_options} in the <b>remotes</b>")
-        return []
+        return ([], "")
 
     def find_best_matching_packages(self, conan_ref: ConanRef, conan_options: Optional[ConanOptions] = None,
                                     remote_name: Optional[str] = None) -> List[ConanPkg]:
@@ -327,7 +326,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
     def _get_remote_groups(self) -> Dict[str, List[Remote]]:
         """
-        Try to group similar URLs(currently only for artifactory links) 
+        Try to group similar URLs (currently only for artifactory links) 
         and return them in a dict grouped by the full URL.
         """
         remote_groups: Dict[str, List[Remote]] = {}

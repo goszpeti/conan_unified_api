@@ -10,8 +10,10 @@ from test.conan_helper import conan_install_ref, conan_remove_ref
 from conan_unified_api import ConanApiFactory as ConanApi
 from conan_unified_api.base.helper import create_key_value_pair_list
 from conan_unified_api.types import ConanRef
+from conan_unified_api.unified_api import ConanUnifiedApi
 
-def test_get_path_or_install(repo_paths):
+
+def test_get_path_or_install(conan_api: ConanUnifiedApi):
     """
     Test, if get_package installs the package and returns the path and check it again.
     The bin dir in the package must exist (indicating it was correctly downloaded)
@@ -19,23 +21,23 @@ def test_get_path_or_install(repo_paths):
     dir_to_check = "bin"
     conan_remove_ref(TEST_REF)
 
-    conan = ConanApi().init_api()
     # Gets package path / installs the package
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF))
+    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(TEST_REF))
     assert (package_folder / dir_to_check).is_dir()
     # check again for already installed package
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF))
+    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(TEST_REF))
     assert (package_folder / dir_to_check).is_dir()
 
-def test_get_path_or_install_manual_options():
+
+def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
     """
     Test, if a package with options can install.
     The actual installaton must not return an error and non given options be merged with default options.
     """
     # This package has an option "shared" and is fairly small.
     conan_remove_ref(TEST_REF)
-    conan = ConanApi().init_api()
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(TEST_REF), {"shared": "True"})
+    id, package_folder = conan_api.get_path_or_auto_install(
+        ConanRef.loads(TEST_REF), {"shared": "True"})
     if platform.system() == "Windows":
         assert (package_folder / "bin" / "python.exe").is_file()
     elif platform.system() == "Linux":
@@ -60,7 +62,9 @@ def test_install_with_any_settings(mocker, capfd):
     assert "Cannot install package" not in captured.err
 
 # @pytest.mark.conanv2 TODO create package for it
-def test_install_compiler_no_settings(repo_paths, capfd):
+
+
+def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     """
     Test, if a package with no settings at all can install
     The actual installaton must not return an error.
@@ -68,9 +72,8 @@ def test_install_compiler_no_settings(repo_paths, capfd):
     ref = "nocompsettings/1.0.0@local/no_sets"
     conan_remove_ref(ref)
     capfd.readouterr() # remove can result in error message - clear
-    conan = ConanApi().init_api()
 
-    id, package_folder = conan.get_path_or_auto_install(ConanRef.loads(ref))
+    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(ref))
     assert (package_folder / "bin").is_dir()
     captured = capfd.readouterr()
     assert "ERROR" not in captured.err

@@ -44,7 +44,7 @@ def conan_api():
             os.remove(base_path / ConanInfoCache.CACHE_FILE_NAME)
 
 
-@pytest.fixture(scope="session")  # , autouse=True
+@pytest.fixture(scope="session", autouse=True)
 def ConanServer():
     if not check_if_process_running("conan_server", timeout_s=0):
         print("STARTING CONAN SERVER")

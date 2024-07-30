@@ -84,7 +84,10 @@ def create_test_ref(ref, paths, create_params=[""], update=False):
 
 def add_remote(remote_name, url):
     if TESTED_ADD_REMOVE_REMOTE:
-        conan_api.add_remote(remote_name, url, False) # only local remotes
+        try:
+            conan_api.add_remote(remote_name, url, False) # only local remotes
+        except Exception: # already added
+            pass
         return
     if conan_version.major == 1:
         os.system(f"conan remote add {remote_name} {url} false")

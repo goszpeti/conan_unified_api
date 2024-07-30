@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
 from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef,
-                    ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
+                    ConanOptions, ConanPackageId, ConanPackagePath, ConanRefLike, ConanSettings, EditablePkg, Remote)
 from typing_extensions import Self, TypeAlias
 
 if TYPE_CHECKING:
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 UserName: TypeAlias = str
 IsAuthenticated: TypeAlias = bool
+RemoteName: TypeAlias = str
 
 # Interface and docs
 
@@ -250,7 +251,7 @@ class ConanUnifiedApi():
     def install_reference(self, conan_ref: ConanRef,
                           conan_settings: Optional[ConanSettings] = None,
                           conan_options: Optional[ConanOptions] = None, profile="",
-                          update=True, generators: List[str] = []
+                          update=True, generators: List[str] = [], remote_name: Optional[str] = None
                           ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan reference (without id) with the provided extra information.
@@ -261,7 +262,7 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def install_package(self, conan_ref: ConanRef, package: ConanPkg,
-                        update=True) -> Tuple[ConanPackageId, ConanPackagePath]:
+                        update=True, remote_name: Optional[str] = None) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan package (id) with the provided extra information.
         Returns the installed id and a valid pkg path, if installation was succesfull.
@@ -294,7 +295,7 @@ class ConanUnifiedApi():
 ### Local References and Packages ###
 
     @abstractmethod
-    def get_export_folder(self, conan_ref: ConanRef) -> Path:
+    def get_export_folder(self, conan_ref: ConanRefLike) -> Path:
         """ Get the export folder form a reference """
         raise NotImplementedError
 
@@ -398,7 +399,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote: Optional[str],
+    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
         """ Return all packages for a reference in a specific remote with an optional query. 
         Can not raise an exception. Returns an empty list if something errors.
@@ -412,7 +413,8 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def find_best_matching_package_in_remotes(self, conan_ref: ConanRef,
-                                              conan_options: Optional[ConanOptions]) -> List[ConanPkg]:
+                                              conan_options: Optional[ConanOptions] = None
+                                             ) -> Tuple[List[ConanPkg], RemoteName]:
         """ Find a package with options in the remotes """
         raise NotImplementedError
 

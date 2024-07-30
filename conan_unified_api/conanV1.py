@@ -18,7 +18,7 @@ except ImportError:
 
 from .base.helper import create_key_value_pair_list
 from .types import (ConanAvailableOptions, ConanOptions, ConanPackageId, ConanPackagePath,
-                    ConanPkg, ConanRef, ConanPkgRef, ConanException, ConanSettings, EditablePkg,
+                    ConanPkg, ConanRef, ConanPkgRef, ConanException, ConanRefLike, ConanSettings, EditablePkg,
                     LoggerWriter, Remote)
 from .common import ConanCommonUnifiedApi
 
@@ -246,8 +246,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         except Exception:  # gotta catch 'em all!
             return invalid_path
 
-    def get_export_folder(self, conan_ref: ConanRef) -> Path:
-        layout = self._client_cache.package_layout(conan_ref)
+    def get_export_folder(self, conan_ref: ConanRefLike) -> Path:
+        layout = self._client_cache.package_layout(self.conan_ref_from_reflike(conan_ref))
         if layout:
             return Path(layout.export())
         return invalid_path
@@ -299,7 +299,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     def install_reference(self, conan_ref: ConanRef, conan_settings: Optional[ConanSettings] = None,
                           conan_options: Optional[ConanOptions] = None, profile="", update=True,
-                          generators: List[str] = []) -> Tuple[ConanPackageId, ConanPackagePath]:
+                          generators: List[str] = [], remote_name: Optional[str] = None) -> Tuple[ConanPackageId, ConanPackagePath]:
         package_id = ""
         if conan_options is None:
             conan_options = {}
@@ -327,7 +327,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 infos = self._conan.install_reference(conan_ref, settings=settings_list, 
                                                       options=options_list, update=update,
                                                       profile_names=profile_names, 
-                                                      generators=generators)
+                                                      generators=generators, remote_name=remote_name)
 
                 patched_tersize.stop()
             if not infos.get("error", True):
@@ -361,24 +361,14 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return content
 
     def get_options_with_default_values(self, conan_ref: ConanRef) -> Tuple[ConanAvailableOptions, ConanOptions]:
-        # this calls external code of the recipe
         default_options = {}
         available_options = {}
         try:
-            ref_info = self._conan.info(self.generate_canonical_ref(conan_ref))
-            # 0. element is always the conanfile itself
-            recipe = ref_info[0].root.dependencies[0].dst.conanfile  # type: ignore
-            # type: ignore
-            default_options_list = recipe.options.items()
-            for option, value in default_options_list:
-                default_options.update({option: value})
-                # No public API for this :( - seems stable for all versions, in worst case
-                # we don't get option defaults
-                opts = recipe.options._data[option]._possible_values
-                available_options.update({option: opts})
+            inspect = self.inspect(self.generate_canonical_ref(conan_ref))
+            default_options = inspect.get("default_options", {})
+            available_options = inspect.get("options", {})
         except Exception as e:
-            raise ConanException(
-                f"Error while getting default options for {str(conan_ref)}: {str(e)}")
+            self.logger.error(f"Error while getting default options for {str(conan_ref)}: {str(e)}")
         return available_options, default_options
 
     # Local References and Packages
@@ -449,11 +439,11 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self.info_cache.update_remote_package_list(res_list)
         return res_list
 
-    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote: Optional[str],
+    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
         found_pkgs: List[ConanPkg] = []
         search_results = self._conan.search_packages(
-            conan_ref.full_str(), query=query, remote_name=remote).get("results", None)
+            conan_ref.full_str(), query=query, remote_name=remote_name).get("results", None)
         if search_results:
             found_pkgs = search_results[0].get("items")[0].get("packages")
 
