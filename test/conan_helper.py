@@ -12,8 +12,8 @@ from . import TEST_REMOTE_NAME, PathSetup, is_ci_job, conan_api
 
 # TESTED feature switches - after these switches are set true,
 # the cli functions will switch to the much faster internal methods
-TESTED_ADD_REMOVE_REMOTE = not is_ci_job()
-TESTED_DISABLE_REMOTE = not is_ci_job()
+TESTED_ADD_REMOVE_REMOTE = False #not is_ci_job()
+TESTED_DISABLE_REMOTE = False # not is_ci_job()
 
 def conan_install_ref(ref, args="", profile=None):
     paths = PathSetup()
@@ -154,3 +154,23 @@ def get_current_profile():
     for profile in profiles:
         if platform.system().lower() in profile:
             return profile
+
+
+def add_editable(ref, path, output_path=None):
+
+    if conan_version.major == 1:
+        add_cmd = f"conan editable add {str(path)} {ref}"
+    else:
+        conan_ref = ConanRef.loads(ref)
+        add_cmd = (f"conan editable add {str(path)} --name {conan_ref.name} --version {conan_ref.version} "
+                   f" --channel {conan_ref.channel} --user {conan_ref.user}")
+    if output_path: # ok for both
+        add_cmd += " -of " + str(output_path)
+
+    os.system(add_cmd)
+
+def remove_editable(ref):
+    if conan_version.major == 1:
+        os.system(f"conan editable remove {ref}")
+    else:
+        os.system(f"conan editable remove -r {ref}")

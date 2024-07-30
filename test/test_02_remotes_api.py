@@ -109,7 +109,6 @@ def test_get_remote(conan_api: ConanUnifiedApi):
     assert remote.url == TEST_REMOTE_URL
 
 
-
 def test_update_remotes(conan_api: ConanUnifiedApi, new_remote):
     new_remote_name, _ = new_remote()
 

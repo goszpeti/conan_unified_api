@@ -12,14 +12,14 @@ from typing_extensions import TypeAlias
 from conan_unified_api import conan_version
 
 if conan_version.major == 1:
-    from conans.model.ref import ConanFileReference, PackageReference # type: ignore
+    from conans.model.ref import ConanFileReference, PackageReference
     from conans.paths.package_layouts.package_editable_layout import PackageEditableLayout  # noqa: F401
     if platform.system() == "Windows":
         from conans.util.windows import CONAN_REAL_PATH, CONAN_LINK
 else:
-    from conans.model.recipe_ref import RecipeReference as ConanFileRef  # type: ignore
-    from conans.model.package_ref import PkgReference  # type: ignore
-    class PackageReference(PkgReference): # type: ignore
+    from conans.model.recipe_ref import RecipeReference as ConanFileRef
+    from conans.model.package_ref import PkgReference
+    class PackageReference(PkgReference):
         """ Compatibility class for changed package_id attribute """
         ref: ConanRef
         
@@ -28,7 +28,7 @@ else:
             return self.package_id
 
         @staticmethod
-        def loads(text: str) -> ConanPkgRef:
+        def loads(text: str) -> ConanPkgRef:  # type: ignore
             pkg_ref = PkgReference.loads(text)
             return PackageReference(pkg_ref.ref, pkg_ref.package_id, 
                                     pkg_ref.revision,pkg_ref.timestamp)
@@ -41,7 +41,7 @@ else:
         channel: Optional[str]
 
         @staticmethod
-        def loads(text: str, validate=True) -> ConanRef:
+        def loads(text: str, validate=True) -> ConanRef: # type: ignore
             ref: ConanRef = ConanFileRef().loads(text) # type: ignore
             if validate:
                 # validate_ref creates an own output stream which can't log to console
@@ -62,7 +62,6 @@ class Remote():
 
 
 ConanRef: TypeAlias = ConanFileReference
-ConanRefLike: TypeAlias = Union[ConanRef, str]
 ConanPkgRef: TypeAlias = PackageReference
 ConanOptions: TypeAlias = Dict[str, Any]
 ConanAvailableOptions: TypeAlias = Dict[str, Union[List[Any], Literal["ANY"]]]

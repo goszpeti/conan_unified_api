@@ -158,17 +158,22 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_config_file_path(self) -> Path:
         return Path(self._client_cache.conan_conf_path)
 
-    def get_config_entry(self, config_name: str) -> Any:
+    def get_config_entry(self, config_name: str) -> Optional[Any]:
+        """ Will always return str, but 2 will return correct type TODO: implement this? """
         try:
             self._conan.out._stream.disabled = True # type: ignore
             config_value = self._conan.config_get(config_name) # mute this output
             self._conan.out._stream.disabled = False  # type: ignore
             return config_value
         except Exception:
-            config_entry_suffix = config_name.split(".")[1]
-            config_value = self._client_cache.config.env_vars.get(
-                "CONAN_" + config_entry_suffix.upper(), "")
-            return config_value
+            try:
+                config_entry_suffix = config_name.split(".")[1]
+                config_value = self._client_cache.config.env_vars.get(
+                    "CONAN_" + config_entry_suffix.upper(), None)
+                return config_value
+            except Exception:
+                return None
+
 
     def get_revisions_enabled(self) -> bool:
         return self._client_cache.config.revisions_enabled
@@ -239,7 +244,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         os.makedirs(short_home, exist_ok=True)
         return Path(short_home)
 
-    def get_package_folder(self, conan_ref: ConanRef, package_id: str) -> Path:
+    def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path otherwise
             return invalid_path
         try:
@@ -248,13 +253,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         except Exception:  # gotta catch 'em all!
             return invalid_path
 
-    def get_export_folder(self, conan_ref: ConanRefLike) -> Path:
+    def get_export_folder(self, conan_ref: Union[ConanRef, str]) -> Path:
         layout = self._client_cache.package_layout(self.conan_ref_from_reflike(conan_ref))
         if layout:
             return Path(layout.export())
         return invalid_path
 
-    def get_conanfile_path(self, conan_ref: ConanRef) -> Path:
+    def get_conanfile_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         try:
             if conan_ref not in self.get_all_local_refs():
                 self._conan.info(self.generate_canonical_ref(conan_ref))
@@ -299,7 +304,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     ### Install related methods ###
 
-    def install_reference(self, conan_ref: ConanRef, conan_settings: Optional[ConanSettings] = None,
+    def install_reference(self, conan_ref: Union[ConanRef, str], conan_settings: Optional[ConanSettings] = None,
             conan_options: Optional[ConanOptions] = None, profile="", update=True,
             generators: List[str] = [], remote_name: Optional[str] = None
         ) -> Tuple[ConanPackageId, ConanPackagePath]:

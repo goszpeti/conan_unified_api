@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
 from .types import (ConanAvailableOptions,  ConanPkg, ConanRef, ConanPkgRef,
-                    ConanOptions, ConanPackageId, ConanPackagePath, ConanRefLike, ConanSettings, EditablePkg, Remote)
+                    ConanOptions, ConanPackageId, ConanPackagePath, ConanSettings, EditablePkg, Remote)
 from typing_extensions import Self, TypeAlias
 
 if TYPE_CHECKING:
@@ -23,6 +23,8 @@ class ConanUnifiedApi():
         For ConanReferences it will always accept str and ConnReference Objects.
         Return types are almost always objects for References and Packages, so that they can be used
         directly in other functions of this API.
+    New convenience functions:
+        - ... TODO:
     Paths as return values:
         Paths will set an INVALID_PATH value instead of None if the Path can't be determined.
         This is done, because usually there is always an exists check or something similar, 
@@ -68,11 +70,13 @@ class ConanUnifiedApi():
 ### Helper commands ###
 
     @staticmethod
+    @abstractmethod
     def generate_canonical_ref(conan_ref: Union[ConanRef, str]) -> str:
         "Creates a full ref from a short ref, e.g. product/1.0.0 -> product/1.0.0@_/_"
         raise NotImplementedError
 
     @staticmethod
+    @abstractmethod
     def conan_ref_from_reflike(conan_ref: Union[ConanRef, str]) -> ConanRef:
         "Creates a ref object if it is a string otherwise returns the object"
         raise NotImplementedError
@@ -152,11 +156,15 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_config_entry(self, config_name: str) -> str:
+    def get_config_entry(self, config_name: str) -> Optional[str]:
         """ Return a conan config entry value (conan.conf).
-        For Conan 1 the format is <section>.<setting_name>, e.g. "general.default_profile".
+            Returns None if no entry was set.
+        For Conan 1 the format is <section>.<setting_name>, e.g. "general.non_interactive".
+            Will evaluate environment variables, which is not consistent to the cli behavior,
+            but thus return more accurate results. 
+            Always returns a string, even for bools.  
         For Conan 2 the formt is <section>:<setting_name>, e.g. core:non_interactive
-        Always returns a string, even for bools.
+            Returns value correctly typed.
         """
         raise NotImplementedError
 
@@ -248,10 +256,11 @@ class ConanUnifiedApi():
 ### Install related methods ###
 
     @abstractmethod
-    def install_reference(self, conan_ref: ConanRef,
+    def install_reference(self, conan_ref: Union[ConanRef, str],
                           conan_settings: Optional[ConanSettings] = None,
                           conan_options: Optional[ConanOptions] = None, profile="",
-                          update=True, generators: List[str] = [], remote_name: Optional[str] = None
+                          update=True, generators: List[str] = [],
+                          remote_name: Optional[str] = None
                           ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan reference (without id) with the provided extra information.
@@ -295,17 +304,17 @@ class ConanUnifiedApi():
 ### Local References and Packages ###
 
     @abstractmethod
-    def get_export_folder(self, conan_ref: ConanRefLike) -> Path:
+    def get_export_folder(self, conan_ref: Union[ConanRef, str]) -> Path:
         """ Get the export folder form a reference """
         raise NotImplementedError
 
     @abstractmethod
-    def get_conanfile_path(self, conan_ref: ConanRef) -> Path:
+    def get_conanfile_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         """ Get local conanfile path. If it is not localy available, download it."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_package_folder(self, conan_ref: ConanRef, package_id: str) -> ConanPackagePath:
+    def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> ConanPackagePath:
         " Get the fully resolved pkg path from the ref and the specific package (id) "
         raise NotImplementedError
 

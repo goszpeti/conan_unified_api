@@ -3,7 +3,7 @@ import logging
 import os
 from pathlib import Path
 from tempfile import gettempdir
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Self
 from unittest.mock import patch
 
@@ -19,7 +19,7 @@ current_path = Path(__file__).parent
 
 if TYPE_CHECKING:
     from conan.api.conan_api import ConanAPI # type: ignore
-    from conans.client.cache.cache import ClientCache
+    from conan.internal.cache.cache import PkgCache as ClientCache
     from .cache.conan_cache import ConanInfoCache
     from conan.internal.cache.home_paths import HomePaths  # type: ignore
 
@@ -38,14 +38,14 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         from conan.api.conan_api import ConanAPI
         self._conan = ConanAPI()
 
-        self.init_client_cache()
+        self._init_client_cache()
 
         from .cache.conan_cache import ConanInfoCache
         self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
         self.logger.debug("Initialized Conan V2 API wrapper")
         return self
 
-    def init_client_cache(self):
+    def _init_client_cache(self):
 
         if conan_version < Version("2.4.0"):
             from conans.client.cache.cache import ClientCache
@@ -60,7 +60,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     ### General commands ###
 
-    def info(self):
+    def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
         path = conan_api.local.get_conanfile_path(
             args.path, cwd, py=None) if args.path else None
 
@@ -87,8 +87,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                                                              remotes, args.update,
                                                              check_updates=args.check_updates)
 
-
-    def inspect(self, conan_ref: ConanRef | ConanPackageId, attributes: List[ConanPackageId] = ...) -> ConanAvailableOptions[ConanPackageId, Any]:
+    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], remote_name: Optional[str] =None,
+                ) -> Dict[str, Any]:
         remotes = conan_api.remotes.list(args.remote) if not args.no_remote else []
         conanfile = conan_api.local.inspect(path, remotes=remotes, lockfile=lockfile)
         result = conanfile.serialize()
@@ -112,7 +112,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             raise ConanException(f"Can't get profile {profile_name} settings: {str(e)}")
         return {}
 
-    def get_package_folder(self, conan_ref: ConanRef, package_id: str) -> Path:
+    def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path ortherwise
             return Path(INVALID_PATH_VALUE)
         try:
@@ -124,10 +124,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         except Exception:  # gotta catch 'em all!
             return Path(INVALID_PATH_VALUE)
 
-    def get_export_folder(self, conan_ref: ConanRef) -> Path:
+    def get_export_folder(self, conan_ref: Union[ConanRef, str]) -> Path:
         return Path(self._conan.cache.export_path(conan_ref))
 
-    def get_conanfile_path(self, conan_ref: ConanRef) -> Path:
+    def get_conanfile_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         try:
             if conan_ref not in self.get_all_local_refs():
                 for remote in self.get_remotes():
@@ -165,8 +165,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         cf_path = Path(self._home_paths.global_conf_path)
         return cf_path
 
-    def get_config_entry(self, config_name: str) -> Any:
-        # TODO: Will possible throw an exception if not in config
+    def get_config_entry(self, config_name: str) -> Optional[Any]:
         return self._conan.config.get(config_name, None)
 
     def get_revisions_enabled(self) -> bool:
@@ -181,7 +180,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return profiles_path
 
     def get_user_home_path(self) -> Path:
-        return Path(self._client_cache.cache_folder)
+        return Path(self._conan.cache_folder)
 
     def get_storage_path(self) -> Path:
         return Path(str(self._client_cache.store))
@@ -234,7 +233,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 remote_name), user_name, password)
 
     ### Install related methods ###
-    def install_reference(self, conan_ref: ConanRef, conan_settings: Optional[ConanSettings]=None,
+    def install_reference(self, conan_ref: Union[ConanRef, str], conan_settings: Optional[ConanSettings] = None,
             conan_options: Optional[ConanOptions]=None, profile="", update=True,
             generators: List[str] = []) -> Tuple[ConanPackageId, ConanPackagePath]:
         pkg_id = ""
@@ -329,22 +328,25 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         """ TODO: Currently there is no equivalent to txt generator from ConanV1 """
         raise NotImplementedError
     
-    def get_editable(self, conan_ref: Union[ConanRef, str]) -> EditablePkg:
+    def get_editable(self, conan_ref: Union[ConanRef, str]) -> Optional[EditablePkg]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         self.__reload_conan_api()
         editables_dict = self._conan.local.editable_list()
-        if isinstance(conan_ref, str):
-            conan_ref = ConanRef.loads(conan_ref)
         editable_dict = editables_dict.get(conan_ref, {})
+        if not editable_dict:
+            return None
         return EditablePkg(str(conan_ref), editable_dict.get("path", INVALID_PATH_VALUE), 
                            editable_dict.get("output_folder"))
     
-    def get_editables_package_path(self, conan_ref: ConanRef) -> Path:
+    def get_editables_package_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         """ Get package path of an editable reference. Can be a folder or conanfile.py """
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         self.__reload_conan_api()
         editables_dict = self._conan.local.editable_list()
         return Path(editables_dict.get(conan_ref, {}).get("path", INVALID_PATH_VALUE))
     
-    def get_editables_output_folder(self, conan_ref: ConanRef) ->  Optional[Path]:
+    def get_editables_output_folder(self, conan_ref: Union[ConanRef, str]) -> Optional[Path]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         self.__reload_conan_api()
         editables_dict = self._conan.local.editable_list()
         output_folder = editables_dict.get(conan_ref, {}).get("output_folder")
@@ -362,13 +364,12 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         from conan.api.conan_api import ConanAPI
         self._conan = ConanAPI()  # reload editables only possible like this
 
-
-    def add_editable(self, conan_ref: Union[ConanRef, str], path: str, output_folder: str) -> bool:
+    def add_editable(self, conan_ref: Union[ConanRef, str], path: Union[Path, str], 
+                     output_folder: Union[Path, str]) -> bool:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         try:
-            if isinstance(conan_ref, str):
-                conan_ref = ConanRef.loads(conan_ref)
-            self._conan.local.editable_add(path, conan_ref.name, conan_ref.version,
-                conan_ref.user, conan_ref.channel, output_folder=output_folder)
+            self._conan.local.editable_add(str(path), conan_ref.name, conan_ref.version,
+                conan_ref.user, conan_ref.channel, output_folder=str(output_folder))
         except Exception as e:
             raise ConanException("Error adding editable: " + str(e))
         return True

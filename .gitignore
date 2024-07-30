@@ -1,5 +1,6 @@
 # own stuff
 cache.json
+cacheV2.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
