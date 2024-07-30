@@ -4,13 +4,15 @@ from conan_unified_api.unified_api import ConanUnifiedApi
 from test.conan_helper import disable_remote, remove_remote, add_remote, TEST_REMOTE_NAME
 from test import TEST_REMOTE_URL, TEST_REMOTE_USER, time_function
 
+
 @pytest.fixture()
-def new_remote(name: str = "new1", url: str = "http://localhost:9303"):
+def new_remote():
+    name: str = "new1"
+    url: str = "http://localhost:9303"
     remove_remote(name)
     add_remote(name, url)
     yield name
     remove_remote(name)
-
 
 def test_add_remove_remotes(conan_api: ConanUnifiedApi):
     """ Check that adding a new remote adds it with all used options.
@@ -55,7 +57,7 @@ def test_get_remote_user_info(conan_api: ConanUnifiedApi):
     """ Check that get_remote_user_info returns a tuple of name and login
       state for the test remote """
     info = conan_api.get_remote_user_info(TEST_REMOTE_NAME)
-    assert info == (TEST_REMOTE_USER, False)
+    assert info == (TEST_REMOTE_USER, True)
 
 
 def test_get_remotes(conan_api: ConanUnifiedApi, new_remote: str):

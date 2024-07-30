@@ -1,4 +1,5 @@
 import logging
+from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
@@ -14,7 +15,6 @@ IsAuthenticated: TypeAlias = bool
 RemoteName: TypeAlias = str
 
 # Interface and docs
-
 
 class ConanUnifiedApi():
     """ 
@@ -357,17 +357,19 @@ class ConanUnifiedApi():
 ### Editables ###
 
     @abstractmethod
-    def get_editable(self, conan_ref: Union[ConanRef, str]) -> EditablePkg:
-        """ Get an editable object from conan reference. """
+    def get_editable(self, conan_ref: Union[ConanRef, str]) -> Optional[EditablePkg]:
+        """ Get an editable object from conan reference. 
+        Returns None if editable does not exist.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_editables_package_path(self, conan_ref: ConanRef) -> Path:
+    def get_editables_package_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         """ Get package path of an editable reference. """
         raise NotImplementedError
 
     @abstractmethod
-    def get_editables_output_folder(self, conan_ref: ConanRef) -> Optional[Path]:
+    def get_editables_output_folder(self, conan_ref: Union[ConanRef, str]) -> Optional[Path]:
         """ Get output folder of an editable reference. """
         raise NotImplementedError
 
@@ -377,7 +379,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def add_editable(self, conan_ref: Union[ConanRef, str], path: str, output_folder: str) -> bool:
+    def add_editable(self, conan_ref: Union[ConanRef, str], path: Union[Path, str], output_folder: Union[Path, str]) -> bool:
         """ Add an editable reference. """
         raise NotImplementedError
 

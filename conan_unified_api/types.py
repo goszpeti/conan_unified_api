@@ -62,7 +62,7 @@ class Remote():
 
 
 ConanRef: TypeAlias = ConanFileReference
-ConanRefLike: TypeAlias = Union[ConanFileReference, str]
+ConanRefLike: TypeAlias = Union[ConanRef, str]
 ConanPkgRef: TypeAlias = PackageReference
 ConanOptions: TypeAlias = Dict[str, Any]
 ConanAvailableOptions: TypeAlias = Dict[str, Union[List[Any], Literal["ANY"]]]

@@ -1,14 +1,7 @@
-import os
-import platform
-import tempfile
-from pathlib import Path
 
-import pytest
-from test import TEST_REF, TEST_REF_OFFICIAL
+from test import TEST_REF, TEST_REMOTE_NAME
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
-from conan_unified_api import ConanApiFactory as ConanApi
-from conan_unified_api.base.helper import create_key_value_pair_list
 from conan_unified_api.types import ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
 
@@ -16,9 +9,9 @@ from conan_unified_api.unified_api import ConanUnifiedApi
 def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF)
     assert inspect.get("name") == ConanRef.loads(TEST_REF).name
-    assert inspect.get("generators") == ["txt", "cmake"]
+    assert inspect.get("generators") == ("txt", "cmake")
 
-    inspect = conan_api.inspect(TEST_REF, ["no_copy_source"])
+    inspect = conan_api.inspect(TEST_REF, ["no_copy_source"], TEST_REMOTE_NAME)
     assert inspect["no_copy_source"] == True
 
 

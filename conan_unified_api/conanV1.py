@@ -192,28 +192,28 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             self._fix_editable_file()  # to not crash conan without this
             return []
 
-    def get_editable(self, conan_ref: Union[ConanRef, str]) -> EditablePkg:
-        if isinstance(conan_ref, str):
-            conan_ref = ConanRef.loads(conan_ref)
-        editable_dict = self._conan.editable_list().get(str(conan_ref), {})
+    def get_editable(self, conan_ref: Union[ConanRef, str]) -> Optional[EditablePkg]:
+        editable_dict = self._conan.editable_list().get(str(conan_ref), None)
+        if not editable_dict:
+            return None
         return EditablePkg(str(conan_ref), editable_dict.get("path", INVALID_PATH_VALUE),
                            editable_dict.get("output_folder"))
 
-    def get_editables_package_path(self, conan_ref: ConanRef) -> Path:
+    def get_editables_package_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         editable_dict = self._conan.editable_list().get(str(conan_ref), {})
         pkg_path = Path(str(editable_dict.get("path", INVALID_PATH_VALUE)))
         return pkg_path
 
-    def get_editables_output_folder(self, conan_ref: ConanRef) -> Optional[Path]:
+    def get_editables_output_folder(self, conan_ref: Union[ConanRef, str]) -> Optional[Path]:
         editable_dict = self._conan.editable_list().get(str(conan_ref), {})
         output_folder = editable_dict.get("output_folder")
         if not output_folder:
             return None
         return Path(str(output_folder))
 
-    def add_editable(self, conan_ref: Union[ConanRef, str], path: str, output_folder: str) -> bool:
+    def add_editable(self, conan_ref: Union[ConanRef, str], path: Union[Path, str], output_folder: Union[Path, str]) -> bool:
         try:
-            self._conan.editable_add(path, str(conan_ref), None, output_folder, None)
+            self._conan.editable_add(str(path), str(conan_ref), None, str(output_folder), None)
         except Exception as e:
             self.logger.error("Error adding editable: " + str(e))
             return False

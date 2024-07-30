@@ -122,9 +122,9 @@ def start_conan_server():
     profiles_path = paths.testdata_path / "conan" / "profile"
     if conan_version.major == 1:
         conan = ConanApiFactory()
-        os.makedirs(conan._client_cache.profiles_path, exist_ok=True)
+        os.makedirs(str(conan.get_profiles_path()), exist_ok=True)
         shutil.copy(str(profiles_path / platform.system().lower()),
-                    conan._client_cache.default_profile_path)
+                    conan.get_profiles_path() / "default")
     elif conan_version.major == 2:
         os.system("conan profile detect")
 
