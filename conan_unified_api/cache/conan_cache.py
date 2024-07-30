@@ -1,13 +1,12 @@
 import json
 from multiprocessing import RLock
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
-from conan_unified_api.base import INVALID_PATH_VALUE, conan_version
+from conan_unified_api.base import conan_version
 from conan_unified_api.base.logger import Logger
 from conan_unified_api.base.helper import delete_path
 from ..types import ConanRef
-from ..common import ConanCommonUnifiedApi as ConanAPI
 
 
 class ConanInfoCache():

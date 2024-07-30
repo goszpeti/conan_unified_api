@@ -1,5 +1,4 @@
 import logging
-from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from abc import abstractmethod
