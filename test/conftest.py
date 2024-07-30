@@ -15,7 +15,7 @@ import psutil
 import pytest
 from conan_unified_api import base_path, ConanInfoCache, ConanApiFactory
 from conan_unified_api import conan_version
-from test import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_OFFICIAL,
+from test import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL,
                   TEST_REMOTE_NAME, TEST_REMOTE_URL, PathSetup, is_ci_job)
 from test.conan_helper import (add_remote, clean_remotes_on_ci,
                                conan_create_and_upload, get_profiles, login_test_remote)
@@ -184,7 +184,7 @@ def create_test_data(paths):
         else:
             conanfile_path = str(paths.testdata_path / "conan" /
                                  "conanfile_no_settingsV2.py")
-        conan_create_and_upload(conanfile_path,  "nocompsettings/1.0.0@local/no_sets")
+        conan_create_and_upload(conanfile_path,  TEST_REF_NO_SETTINGS)
 
     # create a 1000 pkgs..
     # conan = ConanApi()

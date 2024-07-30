@@ -1,7 +1,7 @@
 import platform
 
 import pytest
-from test import TEST_REF, TEST_REMOTE_NAME
+from test import TEST_REF, TEST_REF_NO_SETTINGS, TEST_REMOTE_NAME
 from test.conan_helper import conan_remove_ref
 
 from conan_unified_api import conan_version
@@ -64,9 +64,9 @@ def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     Test, if a package with no settings at all can install
     The actual installaton must not return an error.
     """
-    if conan_version.major == 2:  # TODO create package for it
+    if conan_version.major == 2:  # FIXME: test does not work yet!
         return
-    ref = "nocompsettings/1.0.0@local/no_sets"
+    ref = TEST_REF_NO_SETTINGS
     conan_remove_ref(ref)
     capfd.readouterr() # remove can result in error message - clear
 

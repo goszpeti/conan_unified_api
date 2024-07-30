@@ -1,6 +1,6 @@
 
 import pytest
-from test import TEST_REF, TEST_REF_OFFICIAL, TEST_REMOTE_NAME
+from test import TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL, TEST_REMOTE_NAME
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
 from conan_unified_api import conan_version
@@ -22,16 +22,17 @@ def test_info_simple(conan_api: ConanUnifiedApi):
 
 
 def test_info_transitive_reqs(conan_api: ConanUnifiedApi):
-    info = conan_api.info("nocompsettings/1.0.0@local/no_sets")
+    info = conan_api.info(TEST_REF_NO_SETTINGS)
     assert len(info) == 2
 
     if conan_version.major == 1:
         assert info[0].get("binary_remote") == TEST_REMOTE_NAME
-        assert info[0].get("reference") == "nocompsettings/1.0.0@local/no_sets"
+        assert info[0].get("reference") == TEST_REF_NO_SETTINGS
 
         assert info[1].get("reference") == TEST_REF
-    #elif conan_version.major == 2:  # binary_remote is usually None and reference does not work
-    #    assert info[0].get("name") == ref.name
+    elif conan_version.major == 2:  # binary_remote is usually None and reference does not work
+       assert info[0].get("name") == ConanRef.loads(TEST_REF_NO_SETTINGS).name
+       assert info[1].get("name") == ConanRef.loads(TEST_REF).name
 
 def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
     """
@@ -85,7 +86,7 @@ def test_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     Test, if a package with no settings at all can install
     The actual installaton must not return an error.
     """
-    ref = "nocompsettings/1.0.0@local/no_sets"
+    ref = TEST_REF_NO_SETTINGS
     conan_remove_ref(ref)
     capfd.readouterr()  # remove can result in error message - clear
 
