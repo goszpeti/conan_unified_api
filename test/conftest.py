@@ -152,6 +152,7 @@ def start_conan_server():
     add_remote(TEST_REMOTE_NAME, TEST_REMOTE_URL)
     login_test_remote(TEST_REMOTE_NAME)
     os.system(f"conan remote enable {TEST_REMOTE_NAME}")
+    add_remote("offline_remote", "http://localhost:9999")
 
     create_test_data(paths)
 

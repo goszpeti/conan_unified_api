@@ -56,7 +56,10 @@ class ConanUnifiedApi():
 
     @abstractmethod
     def init_api(self) -> Self:
-        """ Instantiate the internal Conan api. Can be called extra to split up loading. """
+        """ 
+        Instantiate the internal Conan api. Can be called extra to split up loading. 
+        Conan 1 can slow down on init with remove locks noticably, if there are several hundred local packages. 
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -72,13 +75,13 @@ class ConanUnifiedApi():
     @staticmethod
     @abstractmethod
     def generate_canonical_ref(conan_ref: Union[ConanRef, str]) -> str:
-        "Creates a full ref from a short ref, e.g. product/1.0.0 -> product/1.0.0@_/_"
+        """ Creates a full ref from a short ref, e.g. product/1.0.0 -> product/1.0.0@_/_ """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
     def conan_ref_from_reflike(conan_ref: Union[ConanRef, str]) -> ConanRef:
-        "Creates a ref object if it is a string otherwise returns the object"
+        """ Creates a ref object if it is a string otherwise returns the object """
         raise NotImplementedError
 
 
@@ -126,7 +129,7 @@ class ConanUnifiedApi():
 
     @staticmethod
     def build_conan_profile_name_alias(conan_settings: ConanSettings) -> str:
-        "Build a human readable pseduo profile name, like Windows_x64_vs16_v142_release"
+        """ Build a human readable pseduo profile name, like Windows_x64_vs16_v142_release """
         raise NotImplementedError
 
     @abstractmethod
@@ -156,7 +159,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_config_entry(self, config_name: str) -> Optional[str]:
+    def get_config_entry(self, config_name: str) -> Optional[Any]:
         """ Return a conan config entry value (conan.conf).
             Returns None if no entry was set.
         For Conan 1 the format is <section>.<setting_name>, e.g. "general.non_interactive".
@@ -321,7 +324,9 @@ class ConanUnifiedApi():
     @abstractmethod
     def get_conan_buildinfo(self, conan_ref: ConanRef, conan_settings: ConanSettings,
                             conan_options: Optional[ConanOptions] = None) -> str:
-        """ Read conan buildinfo and return as string """
+        """ Read conan buildinfo and return as string 
+        NOTE: Currently not implemented for Conan 2
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -339,7 +344,7 @@ class ConanUnifiedApi():
     def get_best_matching_local_package_path(self, conan_ref: ConanRef,
                                              conan_options: Optional[ConanOptions] = None
                                              ) -> Tuple[ConanPackageId, ConanPackagePath]:
-        " Return the pkg_id and pkg folder of a conan reference, if it is installed. "
+        """ Return the pkg_id and pkg folder of a conan reference, if it is installed. """
         raise NotImplementedError
 
     @abstractmethod
@@ -401,7 +406,7 @@ class ConanUnifiedApi():
     @abstractmethod
     def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
         """ Search in all remotes for a specific query. 
-        Returns a list if unqiue and ordered ConanRefs. """
+        Returns a list of unique and ordered ConanRefs. """
         raise NotImplementedError
 
     @abstractmethod
@@ -412,7 +417,8 @@ class ConanUnifiedApi():
     @abstractmethod
     def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
-        """ Return all packages for a reference in a specific remote with an optional query. 
+        """
+        Return all packages for a reference in a specific remote with an optional query. 
         Can not raise an exception. Returns an empty list if something errors.
         """
         raise NotImplementedError
@@ -434,7 +440,7 @@ class ConanUnifiedApi():
                                     conan_options: Optional[ConanOptions] = None,
                                     remote_name: Optional[str] = None) -> List[ConanPkg]:
         """
-        This method tries to find the best matching packages either locally or in a remote,
+        Tries to find the best matching packages either locally or in a remote,
         based on the users machine and the supplied options.
         """
         raise NotImplementedError

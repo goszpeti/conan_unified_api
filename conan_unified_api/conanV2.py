@@ -87,15 +87,28 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                                                              remotes, args.update,
                                                              check_updates=args.check_updates)
 
-    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], remote_name: Optional[str] =None,
-                ) -> Dict[str, Any]:
-        remotes = conan_api.remotes.list(args.remote) if not args.no_remote else []
-        conanfile = conan_api.local.inspect(path, remotes=remotes, lockfile=lockfile)
-        result = conanfile.serialize()
-        # Some of the serialization info is not initialized so it's pointless to show it to the user
-        for item in ("cpp_info", "system_requires", "recipe_folder", "conf_info"):
-            if item in result:
-                del result[item]
+    def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [], 
+                remote_name: Optional[str] =None) -> Dict[str, Any]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
+
+        remotes = self.get_remotes()
+        if remote_name:
+            remotes = [self.get_remote(remote_name)]
+        path = self.get_conanfile_path(conan_ref)
+        conanfile = self._conan.local.inspect(str(path), remotes=remotes, lockfile=None,
+                                              name=conan_ref.name, version=conan_ref.version,
+                                              user=conan_ref.user, channel=conan_ref.channel)
+        result = {}
+        for attr in dir(conanfile):
+            if attributes:
+                if attr not in attributes:
+                    continue
+            try:
+                result[attr] = getattr(conanfile, attr)
+            except Exception:
+                continue
+        # no serialization, like in ConanV1
+        return result
 
     def remove_locks(self):
         pass  # command does not exist
@@ -115,6 +128,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path ortherwise
             return Path(INVALID_PATH_VALUE)
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         try:
             latest_rev_ref = self._conan.list.latest_recipe_revision(conan_ref)
             latest_rev_pkg = self._conan.list.latest_package_revision(ConanPkgRef(latest_rev_ref, package_id))
@@ -125,13 +139,19 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             return Path(INVALID_PATH_VALUE)
 
     def get_export_folder(self, conan_ref: Union[ConanRef, str]) -> Path:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         return Path(self._conan.cache.export_path(conan_ref))
 
     def get_conanfile_path(self, conan_ref: Union[ConanRef, str]) -> Path:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         try:
             if conan_ref not in self.get_all_local_refs():
                 for remote in self.get_remotes():
-                    result = self.search_recipes_in_remotes(str(conan_ref), remote_name=remote.name)
+                    result = None
+                    try:
+                        result = self.search_recipes_in_remotes(str(conan_ref), remote_name=remote.name)
+                    except Exception:
+                        continue # next
                     if result:
                         latest_rev: ConanRef = self._conan.list.latest_recipe_revision(conan_ref, remote)
                         self._conan.download.recipe(latest_rev, remote) # type: ignore
@@ -233,9 +253,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 remote_name), user_name, password)
 
     ### Install related methods ###
-    def install_reference(self, conan_ref: Union[ConanRef, str], conan_settings: Optional[ConanSettings] = None,
-            conan_options: Optional[ConanOptions]=None, profile="", update=True,
-            generators: List[str] = []) -> Tuple[ConanPackageId, ConanPackagePath]:
+    def install_reference(self, conan_ref: Union[ConanRef, str],
+                          conan_settings: Optional[ConanSettings] = None,
+                          conan_options: Optional[ConanOptions] = None, profile="",
+                          update=True, generators: List[str] = [],
+                          remote_name: Optional[str] = None
+                          ) -> Tuple[ConanPackageId, ConanPackagePath]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         pkg_id = ""
         if conan_options is None:
             conan_options = {}
@@ -252,6 +276,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             # Basic collaborators, remotes, lockfile, profiles
             remotes = self._conan.remotes.list(None)
+            if remote_name:
+                remotes = [self.get_remote(remote_name)]
             profiles = [profile] if profile else []
             profile_host = self._conan.profiles.get_profile(profiles, 
                                         settings=settings_list, options=options_list)
@@ -299,19 +325,19 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 f"Can't install reference '<b>{str(conan_ref)}</b>': {str(error)}")
 
 
-    def get_options_with_default_values(self, 
-                    conan_ref: ConanRef) -> Tuple[ConanAvailableOptions, ConanOptions]:
+    def get_options_with_default_values(self, conan_ref: ConanRef, 
+         remote_name: Optional[str]=None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         # this calls external code of the recipe
         default_options = {}
         available_options = {}
         try:
+            self.inspect(conan_ref, remote_name=remote_name)
             path = self.get_conanfile_path(conan_ref)
             from conan.internal.conan_app import ConanApp
             if conan_version < Version("2.1"):
                 app = ConanApp(self._conan.cache_folder, self._conan.config.global_conf)
             else:
                 app = ConanApp(self._conan)
-
             conanfile = app.loader.load_conanfile(path, conan_ref)
             default_options = conanfile.default_options
             available_options = conanfile.options
@@ -440,13 +466,16 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
         search_results = []
+
         if remote_name == "all":
-            remote_name = None
+            remote = None
+        else:
+            remote = self.get_remote(remote_name)
+            if not remote:
+                raise ConanException(f"Error while searching for recipe: remote {remote_name} does not exist")
         try:
             # no query possible with pattern
-            for remote in self.get_remotes():
-                search_results: List["ConanRef"] = self._conan.search.recipes(
-                    query, remote=remote)
+            search_results: List["ConanRef"] = self._conan.search.recipes(query, remote=remote)
         except Exception as e:
             raise ConanException(f"Error while searching for recipe: {str(e)}")
 
@@ -463,7 +492,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self.info_cache.update_remote_package_list(res_list)
         return res_list
 
-    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote: Optional[str], 
+    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
         found_pkgs: List[ConanPkg] = []
         try:
@@ -471,9 +500,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             pattern = ListPattern(str(conan_ref) + ":*", rrev="", prev="")
             search_results = None
             remote_obj = None
-            if remote:
+            if remote_name:
                 for remote_obj in self.get_remotes():
-                    if remote_obj.name == remote:
+                    if remote_obj.name == remote_name:
                         break
             search_results = self._conan.list.select(pattern, remote=remote_obj, 
                                                      package_query=query)

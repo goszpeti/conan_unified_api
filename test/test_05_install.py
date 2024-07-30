@@ -1,14 +1,10 @@
-import os
 import platform
-import tempfile
-from pathlib import Path
 
 import pytest
-from test import TEST_REF, TEST_REF_OFFICIAL, TEST_REMOTE_NAME
-from test.conan_helper import conan_install_ref, conan_remove_ref
+from test import TEST_REF, TEST_REMOTE_NAME
+from test.conan_helper import conan_remove_ref
 
-from conan_unified_api import ConanApiFactory as ConanApi
-from conan_unified_api.base.helper import create_key_value_pair_list
+from conan_unified_api import conan_version
 from conan_unified_api.types import ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
 
@@ -43,14 +39,14 @@ def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
     elif platform.system() == "Linux":
         assert (package_folder / "bin" / "python").is_file()
 
-# @pytest.mark.conanv2 TODO: Create v2 compatible testcase
-
-
+@pytest.mark.conanv1
 def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
     """
     Test, if a package with <setting>=Any flags can install
     The actual installaton must not return an error.
     """
+    if conan_version.major == 2:  # TODO create package for it
+        return
     # mock the remote response
     conan_remove_ref(TEST_REF)
     # Create the "any" package
@@ -62,14 +58,14 @@ def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
     assert "ERROR" not in captured.err
     assert "Cannot install package" not in captured.err
 
-# @pytest.mark.conanv2 TODO create package for it
-
-
+@pytest.mark.conanv1
 def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     """
     Test, if a package with no settings at all can install
     The actual installaton must not return an error.
     """
+    if conan_version.major == 2:  # TODO create package for it
+        return
     ref = "nocompsettings/1.0.0@local/no_sets"
     conan_remove_ref(ref)
     capfd.readouterr() # remove can result in error message - clear
@@ -83,15 +79,16 @@ def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
 
 
 @pytest.mark.conanv1
-def test_conan_get_conan_buildinfo():
+def test_conan_get_conan_buildinfo(conan_api: ConanUnifiedApi):
     """
     Check, that get_conan_buildinfo actually retrieves as a string for the linux pkg 
     This exectues an install under the hood, thus the category
     """
-    conan = ConanApi().init_api()
+    if conan_version.major == 2: # not implemented yet
+        return
     LINUX_X64_GCC9_SETTINGS = {'os': 'Linux', 'arch': 'x86_64', 'compiler': 'gcc',
                                "compiler.libcxx": "libstdc++11", 'compiler.version': '9', 'build_type': 'Release'}
-    buildinfo = conan.get_conan_buildinfo(
+    buildinfo = conan_api.get_conan_buildinfo(
         ConanRef.loads(TEST_REF), LINUX_X64_GCC9_SETTINGS)
     assert "USER_example" in buildinfo
     assert "ENV_example" in buildinfo

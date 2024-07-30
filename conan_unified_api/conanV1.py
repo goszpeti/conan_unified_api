@@ -262,7 +262,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_conanfile_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         try:
             if conan_ref not in self.get_all_local_refs():
-                self._conan.info(self.generate_canonical_ref(conan_ref))
+                self.inspect(conan_ref)
             layout = self._client_cache.package_layout(conan_ref)
             if layout:
                 return Path(layout.conanfile())
@@ -412,7 +412,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     # Remote References and Packages
 
     def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
-        res_list: List[ConanRef] = []
+        result_recipes: List[ConanRef] = []
         remote_results = []
         try:
             # no query possible with pattern
@@ -421,16 +421,16 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         except Exception as e:
             raise ConanException(f"Error while searching for recipe: {str(e)}")
         if not remote_results:
-            return res_list
+            return result_recipes
 
         for remote_search_res in remote_results:
-            res_list += (list(map(lambda item:
+            result_recipes += (list(map(lambda item:
                                   ConanRef.loads(item.get("recipe", {}).get("id", "")),
                                   remote_search_res.get("items", []))))
-        res_list = list(set(res_list))  # make unique
-        res_list.sort()
-        self.info_cache.update_remote_package_list(res_list)
-        return res_list
+        result_recipes = list(set(result_recipes))  # make unique
+        result_recipes.sort()
+        self.info_cache.update_remote_package_list(result_recipes)
+        return result_recipes
 
     def search_recipe_all_versions_in_remotes(self, conan_ref: ConanRef) -> List[ConanRef]:
         remote_results: List[Dict[str, Any]] = []

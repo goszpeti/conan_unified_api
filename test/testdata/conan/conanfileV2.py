@@ -15,6 +15,7 @@ class Example(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     no_copy_source = True
     short_paths = True
+    generators = "CMakeDeps", "CMakeToolchain"
 
     def package(self):
         # repackage some executable

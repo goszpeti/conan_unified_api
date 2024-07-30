@@ -9,7 +9,7 @@ from conan_unified_api.unified_api import ConanUnifiedApi
 def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF)
     assert inspect.get("name") == ConanRef.loads(TEST_REF).name
-    assert inspect.get("generators") == ("txt", "cmake")
+    assert inspect.get("generators") == ("CMakeDeps", "CMakeToolchain")
 
     inspect = conan_api.inspect(TEST_REF, ["no_copy_source"], TEST_REMOTE_NAME)
     assert inspect["no_copy_source"] == True

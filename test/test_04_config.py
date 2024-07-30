@@ -45,7 +45,7 @@ def test_get_config_entry(conan_api: ConanUnifiedApi):
     if conan_version.major == 1:
         assert str2bool(entry_value)
     else:
-        assert entry_value == True
+        assert entry_value == True # want to know if really True and not some truthy value
 
 
 def test_get_revisions_enabled(conan_api: ConanUnifiedApi):

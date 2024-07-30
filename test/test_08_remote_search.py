@@ -23,20 +23,6 @@ def test_info_transitive_reqs(conan_api: ConanUnifiedApi):
 
     assert info[1].get("reference") == TEST_REF
 
-
-@pytest.mark.conanv1
-def test_conan_get_conan_buildinfo(conan_api: ConanUnifiedApi):
-    """
-    Check, that get_conan_buildinfo actually retrieves as a string for the linux pkg 
-    """
-    LINUX_X64_GCC9_SETTINGS = {'os': 'Linux', 'arch': 'x86_64', 'compiler': 'gcc', 
-        "compiler.libcxx": "libstdc++11",'compiler.version': '9', 'build_type': 'Release'}
-    buildinfo = conan_api.get_conan_buildinfo(
-        ConanRef.loads(TEST_REF), LINUX_X64_GCC9_SETTINGS)
-    assert "USER_example" in buildinfo
-    assert "ENV_example" in buildinfo
-
-
 def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
     """
     Test, if search_package_in_remotes finds a package for the current system and the specified options.
