@@ -31,6 +31,7 @@ def new_editable():
     def _add_editable(ref, path, output_path=None):
         remove_editable(ref) # if it exists with another path
         add_editable(ref, path, output_path)
+        editable_refs.append(ref)
         return
 
     yield _add_editable

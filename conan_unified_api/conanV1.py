@@ -349,7 +349,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         except ConanException as error:
             raise ConanException(f"Can't install reference {str(conan_ref)}': {str(error)}")
 
-    def get_conan_buildinfo(self, conan_ref: ConanRef, conan_settings: ConanSettings,
+    def get_conan_buildinfo(self, conan_ref: Union[ConanRef, str], conan_settings: ConanSettings,
                             conan_options: Optional[ConanOptions] = None) -> str:
         # install ref to temp dir and use generator
         temp_path = Path(gettempdir()) / "cal_cuild_info"
@@ -370,13 +370,12 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 f"Can't read conanbuildinfo.txt for '<b>{str(conan_ref)}</b>': {str(e)}")
         return content
 
-    def get_options_with_default_values(self, conan_ref: ConanRef, 
+    def get_options_with_default_values(self, conan_ref: Union[ConanRef, str],
         remote_name: Optional[str] = None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         default_options = {}
         available_options = {}
         try:
-            inspect = self.inspect(self.generate_canonical_ref(
-                conan_ref), remote_name=remote_name)
+            inspect = self.inspect(self.generate_canonical_ref(conan_ref), remote_name=remote_name)
             default_options = inspect.get("default_options", {})
             available_options = inspect.get("options", {})
         except Exception as e:
@@ -385,7 +384,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     # Local References and Packages
 
-    def remove_reference(self, conan_ref: ConanRef, pkg_id: str = ""):
+    def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = ""):
         pkg_ids = [pkg_id] if pkg_id else None
         self._conan.remove(str(conan_ref), packages=pkg_ids, force=True)
 
@@ -433,7 +432,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self.info_cache.update_remote_package_list(result_recipes)
         return result_recipes
 
-    def search_recipe_all_versions_in_remotes(self, conan_ref: ConanRef) -> List[ConanRef]:
+    def search_recipe_all_versions_in_remotes(self, conan_ref: Union[ConanRef, str]) -> List[ConanRef]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
+
         remote_results: List[Dict[str, Any]] = []
         local_results: List[Dict[str, Any]] = []
 
@@ -451,8 +452,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self.info_cache.update_remote_package_list(res_list)
         return res_list
 
-    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
+    def get_remote_pkgs_from_ref(self, conan_ref: Union[ConanRef, str], remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
+
         found_pkgs: List[ConanPkg] = []
         search_results = self._conan.search_packages(
             conan_ref.full_str(), query=query, remote_name=remote_name).get("results", None)

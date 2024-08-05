@@ -46,7 +46,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
 ### Install related methods ###
 
-    def install_package(self, conan_ref: ConanRef, package: ConanPkg,
+    def install_package(self, conan_ref: Union[ConanRef, str], package: ConanPkg,
                         update=True, remote_name: Optional[str]=None) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan package (id) with the provided extra information.
@@ -70,13 +70,12 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             Logger().error(f"Can't install package '<b>{str(conan_ref)}</b>': {str(e)}")
             return "", Path(INVALID_PATH_VALUE)
 
-    def get_path_or_auto_install(self, conan_ref: ConanRef, conan_options: Optional[ConanOptions] = None,
+    def get_path_or_auto_install(self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None,
                                  update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and package folder of a conan reference 
         and auto-install it with the best matching package, if it is not available """
         if not update:
-            pkg_id, path = self.get_best_matching_local_package_path(
-                conan_ref, conan_options)
+            pkg_id, path = self.get_best_matching_local_package_path(conan_ref, conan_options)
             if pkg_id:
                 return pkg_id, path
             Logger().info(
@@ -85,7 +84,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         pkg_id, path = self.install_best_matching_package(conan_ref, conan_options, update=update)
         return pkg_id, path
 
-    def install_best_matching_package(self, conan_ref: ConanRef,
+    def install_best_matching_package(self, conan_ref: Union[ConanRef, str],
                                       conan_options: Optional[ConanOptions] = None,
                                       update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         packages, remote = self.find_best_matching_package_in_remotes(conan_ref, conan_options)
@@ -99,7 +98,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
 ### Local References and Packages ###
 
-    def find_best_matching_local_package(self, conan_ref: ConanRef,
+    def find_best_matching_local_package(self, conan_ref: Union[ConanRef, str],
                                          conan_options: Optional[ConanOptions] = None) -> ConanPkg:
         """ Find a package in the local cache """
         packages = self.find_best_matching_packages(
@@ -115,7 +114,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         Logger().debug(f"No matching local packages found for <b>{str(conan_ref)}</b>")
         return {"id": ""}
 
-    def get_best_matching_local_package_path(self, conan_ref: ConanRef,
+    def get_best_matching_local_package_path(self, conan_ref: Union[ConanRef, str],
                                              conan_options: Optional[ConanOptions] = None) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and package folder of a conan reference, if it is installed. """
         package = self.find_best_matching_local_package(conan_ref, conan_options)
@@ -154,7 +153,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                     return package
         return {"id": ""}
 
-    def find_best_matching_package_in_remotes(self, conan_ref: ConanRef, 
+    def find_best_matching_package_in_remotes(self, conan_ref: Union[ConanRef, str],
             conan_options: Optional[ConanOptions] = None) -> Tuple[List[ConanPkg], str]:
         """ Find a package with options in the remotes """
         for remote in self.get_remotes():
@@ -166,7 +165,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             f"Can't find a package '<b>{str(conan_ref)}</b>' with options {conan_options} in the <b>remotes</b>")
         return ([], "")
 
-    def find_best_matching_packages(self, conan_ref: ConanRef, conan_options: Optional[ConanOptions] = None,
+    def find_best_matching_packages(self, conan_ref:  Union[ConanRef, str], conan_options: Optional[ConanOptions] = None,
                                     remote_name: Optional[str] = None) -> List[ConanPkg]:
         """
         This method tries to find the best matching packages either locally or in a remote,

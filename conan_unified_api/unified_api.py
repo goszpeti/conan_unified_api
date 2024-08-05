@@ -133,6 +133,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @staticmethod
+    @abstractmethod
     def build_conan_profile_name_alias(conan_settings: ConanSettings) -> str:
         """ Build a human readable pseduo profile name, like Windows_x64_vs16_v142_release """
         raise NotImplementedError
@@ -278,7 +279,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def install_package(self, conan_ref: ConanRef, package: ConanPkg,
+    def install_package(self, conan_ref: Union[ConanRef, str], package: ConanPkg,
                         update=True, remote_name: Optional[str] = None) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
         Try to install a conan package (id) with the provided extra information.
@@ -289,7 +290,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_path_or_auto_install(self, conan_ref: ConanRef,
+    def get_path_or_auto_install(self, conan_ref: Union[ConanRef, str],
                                  conan_options: Optional[ConanOptions] = None,
                                  update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and package folder of a conan reference 
@@ -297,13 +298,13 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def install_best_matching_package(self, conan_ref: ConanRef,
+    def install_best_matching_package(self, conan_ref: Union[ConanRef, str],
                                       conan_options: Optional[ConanOptions] = None,
                                       update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         raise NotImplementedError
 
     @abstractmethod
-    def get_options_with_default_values(self, conan_ref: ConanRef, 
+    def get_options_with_default_values(self, conan_ref: Union[ConanRef, str],
          remote_name: Optional[str]=None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         """ Return the available options and their default values as dict."""
         raise NotImplementedError
@@ -327,7 +328,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_conan_buildinfo(self, conan_ref: ConanRef, conan_settings: ConanSettings,
+    def get_conan_buildinfo(self, conan_ref: Union[ConanRef, str], conan_settings: ConanSettings,
                             conan_options: Optional[ConanOptions] = None) -> str:
         """ Read conan buildinfo and return as string 
         NOTE: Currently not implemented for Conan 2
@@ -335,18 +336,18 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def remove_reference(self, conan_ref: ConanRef, pkg_id: str = ""):
+    def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = ""):
         """ Remove a conan reference and it's package if specified via id """
         raise NotImplementedError
 
     @abstractmethod
-    def find_best_matching_local_package(self, conan_ref: ConanRef,
+    def find_best_matching_local_package(self, conan_ref: Union[ConanRef, str],
                                          conan_options: Optional[ConanOptions] = None) -> ConanPkg:
         """ Find a package in the local cache """
         raise NotImplementedError
 
     @abstractmethod
-    def get_best_matching_local_package_path(self, conan_ref: ConanRef,
+    def get_best_matching_local_package_path(self, conan_ref: Union[ConanRef, str],
                                              conan_options: Optional[ConanOptions] = None
                                              ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and pkg folder of a conan reference, if it is installed. """
@@ -415,12 +416,12 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def search_recipe_all_versions_in_remotes(self, conan_ref: ConanRef) -> List[ConanRef]:
+    def search_recipe_all_versions_in_remotes(self, conan_ref: Union[ConanRef, str]) -> List[ConanRef]:
         """ Search in all remotes for all versions of a conan ref """
         raise NotImplementedError
 
     @abstractmethod
-    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
+    def get_remote_pkgs_from_ref(self, conan_ref: Union[ConanRef, str], remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
         """
         Return all packages for a reference in a specific remote with an optional query. 
@@ -434,14 +435,14 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def find_best_matching_package_in_remotes(self, conan_ref: ConanRef,
+    def find_best_matching_package_in_remotes(self, conan_ref: Union[ConanRef, str],
                                               conan_options: Optional[ConanOptions] = None
                                              ) -> Tuple[List[ConanPkg], RemoteName]:
         """ Find a package with options in the remotes """
         raise NotImplementedError
 
     @abstractmethod
-    def find_best_matching_packages(self, conan_ref: ConanRef,
+    def find_best_matching_packages(self, conan_ref: Union[ConanRef, str],
                                     conan_options: Optional[ConanOptions] = None,
                                     remote_name: Optional[str] = None) -> List[ConanPkg]:
         """

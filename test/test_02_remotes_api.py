@@ -13,6 +13,7 @@ def new_remote():
     def _add_remote(name="new1", url="http://localhost:9303"):
         remove_remote(name)
         add_remote(name, url)
+        remotes.append(name)
         return name, url
 
     yield _add_remote

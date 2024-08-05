@@ -6,7 +6,6 @@ from test.conan_helper import conan_install_ref, conan_remove_ref
 from conan_unified_api.types import ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
 
-
 def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF)
     assert inspect.get("name") == ConanRef.loads(TEST_REF).name
@@ -26,6 +25,8 @@ def test_alias(conan_api: ConanUnifiedApi):
     alias_ref = "example/1.1.1@user/new_channel"
     conan_api.alias(alias_ref, TEST_REF)
     assert conan_api.get_local_pkgs_from_ref(ConanRef.loads(alias_ref))
+
+    conan_remove_ref(alias_ref)
 
 def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
     """

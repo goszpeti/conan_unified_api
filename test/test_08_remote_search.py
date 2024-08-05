@@ -68,18 +68,8 @@ def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanUnifiedApi):
     assert not pkg
 
 
-def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
-    """
-    Test, if get_package installs the package and returns the path and check it again.
-    The bin dir in the package must exist (indicating it was correctly downloaded)
-    """
-    conan_remove_ref(TEST_REF)
-    conan_install_ref(TEST_REF)
-    pkgs = conan_api.find_best_matching_packages(ConanRef.loads(TEST_REF))
-    assert len(pkgs) == 1  # default options are filtered
-
 def test_search_for_all_packages(conan_api: ConanUnifiedApi):
     """ Test, that an existing ref will be found in the remotes. """
-    res = conan_api.search_recipe_all_versions_in_remotes(ConanRef.loads(TEST_REF))
+    res = conan_api.search_recipe_all_versions_in_remotes(TEST_REF)
     ref = ConanRef.loads(TEST_REF)  # need to convert @_/_
     assert str(ref) in str(res)

@@ -348,10 +348,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             raise ConanException(
                 f"Can't install reference '<b>{str(conan_ref)}</b>': {str(error)}")
 
-
-    def get_options_with_default_values(self, conan_ref: ConanRef, 
-         remote_name: Optional[str]=None) -> Tuple[ConanAvailableOptions, ConanOptions]:
+    def get_options_with_default_values(self, conan_ref: Union[ConanRef, str],
+                                        remote_name: Optional[str] = None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         # this calls external code of the recipe
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         default_options = {}
         available_options = {}
         try:
@@ -373,8 +373,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     ### Local References and Packages ###
 
-    def get_conan_buildinfo(self, conan_ref: ConanRef, conan_settings: ConanSettings,
-                            conan_options: Optional[ConanOptions]=None) -> str:
+    def get_conan_buildinfo(self, conan_ref: Union[ConanRef, str], conan_settings: ConanSettings,
+                            conan_options: Optional[ConanOptions] = None) -> str:
         """ TODO: Currently there is no equivalent to txt generator from ConanV1 """
         raise NotImplementedError
     
@@ -433,19 +433,20 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             raise ConanException("Error removing editable: " + str(e))
         return True
 
-    def remove_reference(self, conan_ref: ConanRef, pkg_id: str = ""):
+    def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = ""):
         if pkg_id:
             conan_pkg_ref = ConanPkgRef.loads(str(conan_ref) + ":" + pkg_id)
             latest_rev = self._conan.list.latest_package_revision(conan_pkg_ref)
             self._conan.remove.package(latest_rev, remote=None)  # type: ignore
         else:
+            conan_ref = self.conan_ref_from_reflike(conan_ref)
             latest_rev = self._conan.list.latest_recipe_revision(conan_ref)
             self._conan.remove.recipe(latest_rev, remote=None)  # type: ignore
 
     def get_all_local_refs(self) -> List[ConanRef]:
         return self._client_cache.all_refs()
 
-    def get_local_pkg_from_path(self, conan_ref: ConanRef, path: Path):
+    def get_local_pkg_from_path(self, conan_ref: Union[ConanRef, str], path: Path):
         found_package = None
         for package in self.get_local_pkgs_from_ref(conan_ref):
             if self.get_package_folder(conan_ref, package.get("id", "")) == path:
@@ -509,7 +510,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         search_results.sort()
         return search_results
 
-    def search_recipe_all_versions_in_remotes(self, conan_ref: ConanRef) -> List[ConanRef]:
+    def search_recipe_all_versions_in_remotes(self, conan_ref: Union[ConanRef, str]) -> List[ConanRef]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         search_results = []
         search_results: List = self.search_recipes_in_remotes(f"{conan_ref.name}/*@*/*",
                                                                 remote_name="all")
@@ -518,8 +520,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self.info_cache.update_remote_package_list(res_list)
         return res_list
 
-    def get_remote_pkgs_from_ref(self, conan_ref: ConanRef, remote_name: Optional[str],
+    def get_remote_pkgs_from_ref(self, conan_ref: Union[ConanRef, str], remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
+
         found_pkgs: List[ConanPkg] = []
         try:
             from conan.api.model import ListPattern

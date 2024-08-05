@@ -1,6 +1,5 @@
 import platform
 
-import pytest
 from test import TEST_REF, TEST_REF_NO_SETTINGS, TEST_REMOTE_NAME
 from test.conan_helper import conan_remove_ref
 

@@ -1,12 +1,12 @@
 
 import os
-from pathlib import Path
 import platform
 import tempfile
-import pytest
+from pathlib import Path
+
+from conan_unified_api import conan_version
 from conan_unified_api.base.helper import str2bool
 from conan_unified_api.unified_api import ConanUnifiedApi
-from conan_unified_api import conan_version
 
 
 def test_get_settings_file_path(conan_api: ConanUnifiedApi):
