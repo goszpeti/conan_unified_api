@@ -24,65 +24,59 @@ jobs:
         name:
           [
             # latest conan 1.X on U20 and Windows
-            "ubuntu20-py38-conan1-latest",
-            "ubuntu20-py39-conan1-latest",
-            "ubuntu20-py310-conan1-latest",
-            "windows-py311-conan1-latest",
-            # conan minimum version with python minimum version
-            "ubuntu20-py38-conan1.48",
-            # conan 2 stuff with bleeding edge - use Python 3.12 (U22 needed)
-            "ubuntu22-py310-conan2.3", #   2.3 API changes
-            "ubuntu22-py312-conan2-latest", # post 2.3 API changes
-            "windows-py312-conan2-latest", # latest everything
+            "ubuntu20-py38-conan1",
+            "ubuntu20-py39-conan1",
+            "ubuntu20-py310-conan1",
+            "ubuntu20-py311-conan1",
+            "ubuntu22-py312-conan1",
+            "windows-py311-conan1",
+            # conan 2 stuff - for Python 3.12 (U22 needed)
+            "ubuntu20-py310-conan2",
+            "ubuntu22-py312-conan2",
+            "windows-py312-conan2",
           ]
         include:
-          - name: "ubuntu20-py38-conan1-latest"
+          - name: "ubuntu20-py38-conan1"
             python: "3.8"
             os: ubuntu-20.04
-            conan: "<2"
-            conan_server: "<2"
-          - name: "ubuntu20-py39-conan1-latest"
+            conan: "1"
+          - name: "ubuntu20-py39-conan1"
             python: "3.9"
-            conan: "<2"
-            conan_server: "<2"
+            conan: "1"
             os: ubuntu-20.04
-          - name: "ubuntu20-py310-conan1-latest"
+          - name: "ubuntu20-py310-conan1"
             python: "3.10"
-            conan: "<2"
-            conan_server: "<2"
+            conan: "1"
             os: ubuntu-20.04
-          - name: "windows-py311-conan1-latest"
+          - name: "ubuntu20-py311-conan1"
+            python: "3.10"
+            conan: "1"
+            os: ubuntu-20.04
+          - name: "ubuntu22-py312-conan1"
+            python: "3.10"
+            conan: "1"
+            os: ubuntu-20.04
+          - name: "windows-py311-conan1"
             python: "3.11"
             os: windows-latest
-            conan: "<2"
-            conan_server: "<2"
-          - name: "ubuntu20-py38-conan1.48"
-            python: "3.8"
-            os: ubuntu-20.04
-            conan: "==1.48.0"
-            conan_server: "==1.48.0"
-          - name: "ubuntu22-py310-conan2.3"
+            conan: "1"
+
+          - name: "ubuntu20-py310-conan2"
             python: "3.10"
             os: ubuntu-22.04
-            conan: <2.4
-            conan_server: "-server <2.4"
-          - name: "ubuntu22-py312-conan2-latest"
+            conan: "2"
+          - name: "ubuntu22-py312-conan2"
             python: "3.12"
             os: ubuntu-22.04
-            conan: <2.5
-            conan_server: "-server <2.5"
-          - name:  windows-py312-conan2-latest
+            conan: "2"
+          - name:  windows-py312-conan2
             python: "3.12"
             os: windows-latest
-            conan: <2.5 # latest conan 2
-            conan_server: "-server <2.5"
+            conan: "2"
     env:
       DISPLAY: ":99.0"
       LC_ALL: "en_US.UTF-8"
-      CONAN_REVISIONS_ENABLED: 1
-      CAL_DEBUG_LEVEL: 2 # this does not use Qt Threads, but enables to see stacktraces
-      # QT_LOGGING_RULES=: "*.debug=true"
-      # QT_DEBUG_PLUGINS: 1
+      CAL_DEBUG_LEVEL: 2
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python }}
@@ -94,8 +88,7 @@ jobs:
       - name: Install specific Conan version
         run: | # markupsafe is a workaround fix for broken conan dependencies
           pip install markupsafe==2.0.1 --use-pep517
-          pip install "conan${{ matrix.conan }}" --use-pep517
-          pip install "conan${{ matrix.conan_server }}" --use-pep517
+          pip install "conan~=${{ matrix.conan }}.0" --use-pep517
       - name: Install own package and test dependencies
         # need -e because of coverage paths.
         run: |
@@ -104,8 +97,8 @@ jobs:
           CONAN_VERSION: ${{ matrix.conan}}
       - name: Execute unitests with pytest
         run: >-
-          pytest -v test --junit-xml=./results/result-unit-${{matrix.name}}.xml
-          --cov=conan_unified_api --cov-branch --cov-append --capture=no
+          python script/execute_tests.py --conan_major_version=${{ matrix.conan }}
+          
       - name: Upload Test results
         uses: actions/upload-artifact@v3 # TODO: v4 does not support overwrite anymore
         with:
