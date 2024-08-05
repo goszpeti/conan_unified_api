@@ -248,6 +248,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path otherwise
             return invalid_path
+        conan_ref = self.conan_ref_from_reflike(conan_ref)
         try:
             layout = self._client_cache.package_layout(conan_ref)
             return Path(layout.package(ConanPkgRef(conan_ref, package_id)))
@@ -439,7 +440,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         local_results: List[Dict[str, Any]] = []
 
         remote_results = self._conan.search_recipes(
-            f"{conan_ref.name}/*@*/*", remote_name="all").get("results", None)
+            f"{conan_ref.name}/*", remote_name="all").get("results", None)
 
         res_list: List[ConanRef] = []
         for remote_search_res in local_results + remote_results:
