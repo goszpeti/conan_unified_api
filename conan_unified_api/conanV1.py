@@ -264,7 +264,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             if conan_ref not in self.get_all_local_refs():
                 self.inspect(conan_ref)
-            layout = self._client_cache.package_layout(conan_ref)
+            layout = self._client_cache.package_layout(self.conan_ref_from_reflike(conan_ref))
             if layout:
                 return Path(layout.conanfile())
         except Exception as e:
