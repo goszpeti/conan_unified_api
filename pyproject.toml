@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conan-unified-api"
 authors = [{name = "Péter Gosztolya and Contributors"}]
-version = "0.1.0a1"
+version = "0.1.0a2"
 requires-python = ">=3.8"
 description = "Compatibility layer for Conan 1 and 2 for Python 3.8+"
 readme = "README.md"
@@ -21,6 +21,9 @@ dependencies = [
     'typing-extensions>=3.10.0.2, <5',  # Python Software Foundation License(PSF)
     "packaging",  # use the built-in, or get latest if there is some issue with pip
 ]
+
+[tool.setuptools]
+packages = ["conan_unified_api"]
 
 [project.urls]
 repository = "https://github.com/goszpeti/conan_unified_api.git"
