@@ -493,18 +493,19 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
         search_results = []
-
+        remotes = []
         if remote_name == "all":
-            remote = None
+            remotes = self.get_remotes()
         else:
-            remote = self.get_remote(remote_name)
-            if not remote:
+            remotes = [self.get_remote(remote_name)]
+            if not remotes:
                 raise ConanException(f"Error while searching for recipe: remote {remote_name} does not exist")
-        try:
-            # no query possible with pattern
-            search_results: List["ConanRef"] = self._conan.search.recipes(query, remote=remote)
-        except Exception as e:
-            raise ConanException(f"Error while searching for recipe: {str(e)}")
+        for remote in remotes:
+            try:
+                # no query possible with pattern
+                search_results: List["ConanRef"] = self._conan.search.recipes(query, remote=remote)
+            except Exception as e:
+                raise ConanException(f"Error while searching for recipe: {str(e)}")
 
         search_results = list(set(search_results))  # make unique
         search_results.sort()
@@ -513,12 +514,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def search_recipe_all_versions_in_remotes(self, conan_ref: Union[ConanRef, str]) -> List[ConanRef]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
         search_results = []
-        search_results: List = self.search_recipes_in_remotes(f"{conan_ref.name}/*@*/*",
-                                                                remote_name="all")
+        search_results: List = self.search_recipes_in_remotes(f"{conan_ref.name}/*", remote_name="all")
 
-        res_list: List[ConanRef] = search_results
-        self.info_cache.update_remote_package_list(res_list)
-        return res_list
+        self.info_cache.update_remote_package_list(search_results)
+        return search_results
 
     def get_remote_pkgs_from_ref(self, conan_ref: Union[ConanRef, str], remote_name: Optional[str],
                                  query=None) -> List[ConanPkg]:

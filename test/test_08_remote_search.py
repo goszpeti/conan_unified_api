@@ -71,5 +71,5 @@ def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanUnifiedApi):
 def test_search_for_all_packages(conan_api: ConanUnifiedApi):
     """ Test, that an existing ref will be found in the remotes. """
     res = conan_api.search_recipe_all_versions_in_remotes(TEST_REF)
-    ref = ConanRef.loads(TEST_REF)  # need to convert @_/_
-    assert str(ref) in str(res)
+    assert len(res) == 2
+    assert TEST_REF in str(res)
