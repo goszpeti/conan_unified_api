@@ -70,9 +70,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         profile_host = self._conan.profiles.get_profile(profiles, 
                                     settings=[], options=[])
         requires = [conan_ref]
-        update = False
-        deps_graph = self._conan.graph.load_graph_requires(requires, None, 
-                        profile_host, profile_host, None, remotes, update)
+        if conan_version < Version("2.2"):
+            update="*"
+        else:
+            update = False
+
+        deps_graph = self._conan.graph.load_graph_requires(requires, None,
+                                                               profile_host, profile_host, None, remotes, update)
         # this modifies deps_graph
         self._conan.graph.analyze_binaries(deps_graph, build_mode=None, remotes=remotes,
                                    update=update, lockfile=None)
@@ -102,7 +106,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             remotes = [self.get_remote(remote_name)]
 
         path = self.get_conanfile_path(conan_ref)
-        conanfile = self._conan.local.inspect(str(path), remotes=remotes, lockfile=None,
+        if conan_version < Version("2.4"):
+            conanfile = self._conan.local.inspect(str(path), remotes=remotes, lockfile=None)
+        else:
+            conanfile = self._conan.local.inspect(str(path), remotes=remotes, lockfile=None,
                                               name=conan_ref.name, version=conan_ref.version,
                                               user=conan_ref.user, channel=conan_ref.channel)
         result = {}

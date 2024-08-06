@@ -24,7 +24,8 @@ for conan_version in test_versions[conan_major]:
     os.system(f"pip install conan{conan_version} --use-pep517 --no-build-isolation")
     if conan_major=="2":
         os.system(f"pip install conan_server{conan_version} --use-pep517")
-    subprocess.run(["pytest", "-v", "test", f"--junit-xml=./results/result-unit-{conan_version}.xml",
+    conan_version_stripped = conan_version.strip("=").strip("~").strip("<")
+    subprocess.run(["pytest", "-v", "test", f"--junit-xml=./results/result-unit-{conan_version_stripped}.xml",
                     "--cov=conan_unified_api", "--cov-branch", "--cov-append", "--capture=no"], 
                     check=True)
     os.environ["SKIP_CREATE_CONAN_TEST_DATA"]="True" # enable after first run
