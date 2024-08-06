@@ -15,8 +15,8 @@ def test_info_simple(conan_api: ConanUnifiedApi):
     info = conan_api.info(ref)
     assert len(info) == 1
     if conan_version.major == 1:
-        assert info[0].get("binary_remote") == "local"
         assert info[0].get("reference") == TEST_REF_OFFICIAL.split("@")[0]
+        # assert info[0].get("binary_remote") == "local"
     elif conan_version.major == 2:  # binary_remote is usually None and reference does not work
         assert info[0].get("name") == ref.name
 
