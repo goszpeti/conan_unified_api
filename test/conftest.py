@@ -17,8 +17,8 @@ from conan_unified_api import base_path, ConanInfoCache, ConanApiFactory
 from conan_unified_api import conan_version
 from test import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL,
                   TEST_REMOTE_NAME, TEST_REMOTE_URL, PathSetup, is_ci_job)
-from test.conan_helper import (add_remote, clean_remotes_on_ci,
-                               conan_create_and_upload, get_profiles, login_test_remote)
+from test.conan_helper import (add_remote, clean_remotes_on_ci, conan_create,
+                               conan_upload, get_profiles, login_test_remote)
 import test.conan_helper
 
 exe_ext = ".exe" if platform.system() == "Windows" else ""
@@ -169,23 +169,25 @@ def create_test_data(paths):
     print("CREATING TESTDATA FOR LOCAL CONAN SERVER")
     profiles_path = paths.testdata_path / "conan" / "profile"
 
-    for profile in get_profiles():
-        profile_path = profiles_path / profile
+    args = []
+    for arg in ["", "-o shared=False"]:
+        for profile in get_profiles():
+            profile_path = profiles_path / profile
+            args.append(f"-pr {str(profile_path)} {arg}")
+    # create test pkgs
+    create_test_ref(TEST_REF, paths, args)
+    create_test_ref(TEST_REF_OFFICIAL, paths, args)
 
-        # create test pkgs
-        create_test_ref(TEST_REF, paths, [f"-pr {str(profile_path)}",
-                                          f"-o shared=False -pr {str(profile_path)}"])
-        create_test_ref(TEST_REF_OFFICIAL, paths, [
-                        f"-pr {str(profile_path)}"])
 
-        # create no settings pkgs
-        if conan_version.major == 1:
-            conanfile_path = str(paths.testdata_path / "conan" /
-                                 "conanfile_no_settings.py")
-        else:
-            conanfile_path = str(paths.testdata_path / "conan" /
-                                 "conanfile_no_settingsV2.py")
-        conan_create_and_upload(conanfile_path,  TEST_REF_NO_SETTINGS)
+    # create no settings pkgs
+    if conan_version.major == 1:
+        conanfile_path = str(paths.testdata_path / "conan" /
+                                "conanfile_no_settings.py")
+    else:
+        conanfile_path = str(paths.testdata_path / "conan" /
+                                "conanfile_no_settingsV2.py")
+    conan_create(conanfile_path,  TEST_REF_NO_SETTINGS)
+    conan_upload(TEST_REF_NO_SETTINGS)
 
     # create a 1000 pkgs..
     # conan = ConanApi()
@@ -204,4 +206,5 @@ def create_test_ref(ref, paths, create_params=[""]):
         conanfile = str(paths.testdata_path / "conan" / "conanfileV2.py")
 
     for param in create_params:
-        conan_create_and_upload(conanfile, ref, param)
+        conan_create(conanfile, ref, param)
+    conan_upload(ref)

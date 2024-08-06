@@ -6,8 +6,7 @@ source =
 [run]
 branch = True
 parallel = True
-source = 
-    conan_explorer
+source = conan_unified_api
 
 [report]
 precision = 2

@@ -9,11 +9,11 @@ Compatibility layer for Conan 1 and 2 for Python.
 
 ## Test matrix
 
+Tested Conan 1 versions: 1.48, 1.59.0 and latest
+Tested Conan 2 versions: all minor versions until latest
 
- **Python/conan** | **3.8** | **3.9** | **3.10** | **3.11** | **3.12** 
-------------------|---------|---------|----------|----------|----------
- **1.48.0**       | u20     |         |          |          |          
- **latest 1**     | u20     | u20     | u20      | win      |          
- **latest 2.0**   |         |         |          |          | u22      
- **2.3**          |         |         |          |          | u22      
- **latest 2**     |         |         |          |          | u22, win 
+ **Python/OS.** | **3.8** | **3.9** | **3.10** | **3.11** | **3.12** 
+----------------|---------|---------|----------|----------|----------
+ **u20**        | conan1  |conan1   |conan1&2  |conan1    |          
+ **u22**        |         |         |          |          |conan1&2
+ **win**        |         |         |          |conan1    |conan2

@@ -44,10 +44,9 @@ def conan_add_editables(conanfile_path: str, reference: ConanRef):  # , path: st
         os.system(f"conan editable add {conanfile_path} {str(reference)}")
 
 
-def conan_create_and_upload(conanfile: str, ref: str, create_params=""):
+def conan_create(conanfile: str, ref: str, create_params=""):
     if conan_version.major == 1:
         os.system(f"conan create {conanfile} {ref} {create_params}")
-        os.system(f"conan upload {ref} -r {TEST_REMOTE_NAME} --force --all")
     elif conan_version.major == 2:
         ref = ref.replace("@_/_", "")  # does not work anymore...
         cfr = ConanRef.loads(ref)
@@ -58,8 +57,13 @@ def conan_create_and_upload(conanfile: str, ref: str, create_params=""):
             extra_args += f"--channel={cfr.channel} "
         os.system(
             f"conan create {conanfile} --name={cfr.name} --version={cfr.version} {extra_args} {create_params}")
-        os.system(f"conan upload {ref} -r {TEST_REMOTE_NAME} --force")
 
+
+def conan_upload(ref: str):
+    if conan_version.major == 1:
+        os.system(f"conan upload {ref} -r {TEST_REMOTE_NAME} --force --all")
+    elif conan_version.major == 2:
+        os.system(f"conan upload {ref} -r {TEST_REMOTE_NAME} --force")
 
 def add_remote(remote_name, url):
     if TESTED_ADD_REMOVE_REMOTE:
