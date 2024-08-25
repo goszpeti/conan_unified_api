@@ -67,7 +67,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:  # use try-except because of Conan 1.24 envvar errors in tests
             self.remove_locks()
         except Exception as e:
-            self.logger.debug(str(e))
+            self.logger.debug(str(e), exc_info=True)
         from .cache.conan_cache import ConanInfoCache
         self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
         self.logger.debug("Initialized Conan V1 API wrapper")
@@ -97,7 +97,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self._conan.remove_locks()
 
     def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
-        with save_sys_path():  # can change path
+        with save_sys_path():  # can change path or run arbitrary code and thus break things
             canonical_ref = self.generate_canonical_ref(conan_ref)
             deps_graph = self._conan.info(canonical_ref)
             # ugly hack, but sadly no other way to do this
@@ -118,7 +118,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             
     def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [],
                 remote_name: Optional[str] = None) -> Dict[str, Any]:
-        with save_sys_path():  # can change path
+        with save_sys_path():  # can change path or run arbitrary code and thus break things
             # cast from ordered dict
             return dict(self._conan.inspect(str(conan_ref), attributes=attributes, 
                                             remote_name=remote_name))
