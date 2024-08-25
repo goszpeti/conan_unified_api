@@ -58,7 +58,6 @@ def delete_path(dst: Path):
 
 @contextmanager
 def save_sys_path():
-
     saved_path = sys.path.copy()
     yield
     # restore

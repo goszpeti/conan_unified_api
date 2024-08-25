@@ -48,12 +48,6 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
     def install_package(self, conan_ref: Union[ConanRef, str], package: ConanPkg,
                         update=True, remote_name: Optional[str]=None) -> Tuple[ConanPackageId, ConanPackagePath]:
-        """
-        Try to install a conan package (id) with the provided extra information.
-        Returns the installed id and a valid package path, if installation was succesfull.
-        WARNING: The installed id can differ from the requested one, because there is no built-in 
-        way in conan to install a specific package id!
-        """
         from conans.errors import ConanException
         package_id = package.get("id", "")
         options = package.get("options", {})
