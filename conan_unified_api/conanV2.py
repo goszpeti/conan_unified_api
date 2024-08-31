@@ -148,13 +148,15 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return self._conan.profiles.list()
 
     def get_profile_settings(self, profile_name: str) -> ConanSettings:
-        from conans.client.profile_loader import ProfileLoader
+        try:
+            from conans.client.profile_loader import ProfileLoader
+        except:
+            from conan.internal.api.profile.profile_loader import ProfileLoader
         try:
             profile = ProfileLoader(self._conan.cache_folder).load_profile(profile_name)
             return profile.settings
         except Exception as e:
             raise ConanException(f"Can't get profile {profile_name} settings: {str(e)}")
-        return {}
 
     def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path ortherwise
@@ -197,7 +199,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return Path(INVALID_PATH_VALUE)
 
     def get_default_settings(self) -> ConanSettings:
-        from conans.client.profile_loader import ProfileLoader
+        try:
+            from conans.client.profile_loader import ProfileLoader
+        except:
+            from conan.internal.api.profile.profile_loader import ProfileLoader
         profile = ProfileLoader(self._conan.cache_folder).load_profile(
             Path(self._conan.profiles.get_default_host()).name)
 
@@ -451,7 +456,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             self._conan.remove.recipe(latest_rev, remote=None)  # type: ignore
 
     def get_all_local_refs(self) -> List[ConanRef]:
-        return self._client_cache.all_refs()
+        if conan_version < Version("2.6"):
+            return self._client_cache.all_refs()
+        return self._client_cache._db.list_references()
 
     def get_local_pkg_from_path(self, conan_ref: Union[ConanRef, str], path: Path):
         found_package = None
