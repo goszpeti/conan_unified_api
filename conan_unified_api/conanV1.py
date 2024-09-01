@@ -115,12 +115,12 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             infos.remove(own_info)
             infos.insert(0, own_info)
             return infos
-            
+
     def inspect(self, conan_ref: Union[ConanRef, str], attributes: List[str] = [],
                 remote_name: Optional[str] = None) -> Dict[str, Any]:
         with save_sys_path():  # can change path or run arbitrary code and thus break things
             # cast from ordered dict
-            return dict(self._conan.inspect(str(conan_ref), attributes=attributes, 
+            return dict(self._conan.inspect(str(conan_ref), attributes=attributes,
                                             remote_name=remote_name))
 
     def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
@@ -162,8 +162,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_config_entry(self, config_name: str) -> Optional[Any]:
         """ Will always return str, but 2 will return correct type TODO: implement this? """
         try:
-            self._conan.out._stream.disabled = True # type: ignore
-            config_value = self._conan.config_get(config_name) # mute this output
+            self._conan.out._stream.disabled = True  # type: ignore
+            config_value = self._conan.config_get(config_name)  # mute this output
             self._conan.out._stream.disabled = False  # type: ignore
             return config_value
         except Exception:
@@ -174,7 +174,6 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 return config_value
             except Exception:
                 return None
-
 
     def get_revisions_enabled(self) -> bool:
         return self._client_cache.config.revisions_enabled
@@ -219,7 +218,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     def add_editable(self, conan_ref: Union[ConanRef, str], path: Union[Path, str], output_folder: Union[Path, str]) -> bool:
         try:
-            self._conan.editable_add(str(path), str(conan_ref), None, str(output_folder), None)
+            self._conan.editable_add(str(path), str(conan_ref),
+                                     None, str(output_folder), None)
         except Exception as e:
             self.logger.error("Error adding editable: " + str(e))
             return False
@@ -256,7 +256,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             return invalid_path
 
     def get_export_folder(self, conan_ref: Union[ConanRef, str]) -> Path:
-        layout = self._client_cache.package_layout(self.conan_ref_from_reflike(conan_ref))
+        layout = self._client_cache.package_layout(
+            self.conan_ref_from_reflike(conan_ref))
         if layout:
             return Path(layout.export())
         return invalid_path
@@ -265,7 +266,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             if conan_ref not in self.get_all_local_refs():
                 self.inspect(conan_ref)
-            layout = self._client_cache.package_layout(self.conan_ref_from_reflike(conan_ref))
+            layout = self._client_cache.package_layout(
+                self.conan_ref_from_reflike(conan_ref))
             if layout:
                 return Path(layout.conanfile())
         except Exception as e:
@@ -307,9 +309,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     ### Install related methods ###
 
     def install_reference(self, conan_ref: Union[ConanRef, str], conan_settings: Optional[ConanSettings] = None,
-            conan_options: Optional[ConanOptions] = None, profile="", update=True,
-            generators: List[str] = [], remote_name: Optional[str] = None
-        ) -> Tuple[ConanPackageId, ConanPackagePath]:
+                          conan_options: Optional[ConanOptions] = None, profile="", update=True,
+                          generators: List[str] = [], remote_name: Optional[str] = None
+                          ) -> Tuple[ConanPackageId, ConanPackagePath]:
 
         package_id = ""
         if conan_options is None:
@@ -335,9 +337,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 mock = patched_tersize.start()
                 mock.return_value = spoof_size
 
-                infos = self._conan.install_reference(conan_ref, settings=settings_list, 
+                infos = self._conan.install_reference(conan_ref, settings=settings_list,
                                                       options=options_list, update=update,
-                                                      profile_names=profile_names, 
+                                                      profile_names=profile_names,
                                                       generators=generators, remote_name=remote_name)
 
                 patched_tersize.stop()
@@ -348,7 +350,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 f"Installation of '<b>{str(conan_ref)}</b>' finished")
             return package_id, self.get_package_folder(conan_ref, package_id)
         except ConanException as error:
-            raise ConanException(f"Can't install reference {str(conan_ref)}': {str(error)}")
+            raise ConanException(
+                f"Can't install reference {str(conan_ref)}': {str(error)}")
 
     def get_conan_buildinfo(self, conan_ref: Union[ConanRef, str], conan_settings: ConanSettings,
                             conan_options: Optional[ConanOptions] = None) -> str:
@@ -372,15 +375,17 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return content
 
     def get_options_with_default_values(self, conan_ref: Union[ConanRef, str],
-        remote_name: Optional[str] = None) -> Tuple[ConanAvailableOptions, ConanOptions]:
+                                        remote_name: Optional[str] = None) -> Tuple[ConanAvailableOptions, ConanOptions]:
         default_options = {}
         available_options = {}
         try:
-            inspect = self.inspect(self.generate_canonical_ref(conan_ref), remote_name=remote_name)
+            inspect = self.inspect(self.generate_canonical_ref(
+                conan_ref), remote_name=remote_name)
             default_options = inspect.get("default_options", {})
             available_options = inspect.get("options", {})
         except Exception as e:
-            self.logger.error(f"Error while getting default options for {str(conan_ref)}: {str(e)}")
+            self.logger.error(
+                f"Error while getting default options for {str(conan_ref)}: {str(e)}")
         return available_options, default_options
 
     # Local References and Packages
@@ -426,8 +431,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
         for remote_search_res in remote_results:
             result_recipes += (list(map(lambda item:
-                                  ConanRef.loads(item.get("recipe", {}).get("id", "")),
-                                  remote_search_res.get("items", []))))
+                                        ConanRef.loads(
+                                            item.get("recipe", {}).get("id", "")),
+                                        remote_search_res.get("items", []))))
         result_recipes = list(set(result_recipes))  # make unique
         result_recipes.sort()
         self.info_cache.update_remote_package_list(result_recipes)
