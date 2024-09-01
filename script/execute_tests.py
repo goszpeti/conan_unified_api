@@ -1,10 +1,12 @@
 
 
+import xml.etree.ElementTree as ET
 import argparse
 import os
 import platform
 import subprocess
 import sys
+from pathlib import Path
 
 conan_major = 1
 
@@ -36,3 +38,16 @@ for conan_version in test_versions[conan_major]:
                     "--cov=conan_unified_api", "--cov-branch", "--cov-append", "--capture=no"], 
                     check=True)
     os.environ["SKIP_CREATE_CONAN_TEST_DATA"]="True" # enable after first run
+
+## normalize coverage paths
+
+for cov_file in (Path(".") / "cov").glob("*.xml"):
+    
+    root = ET.fromstring(cov_file.read_text())
+    source = root.find(".//sources/source")
+    orig_path = source.text
+    new_path = "./" + Path(source.text).name
+    print(f"Replaced {orig_path} to {new_path}")
+    source.text = new_path
+    cov_file.write_text(ET.tostring(root).decode("utf-8"))
+  
