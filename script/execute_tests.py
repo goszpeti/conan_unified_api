@@ -32,7 +32,7 @@ for conan_version in test_versions[conan_major]:
     if "<" in conan_version_stripped:
         conan_version_stripped = str(int(conan_version_stripped.strip("<")) - 1) + "-latest"
     subprocess.run(["pytest", "-v", "test", f"--junit-xml=./results/result-unit-{conan_version_stripped}.xml",
-                    f"--cov-report=xml:cov/cov-{ci_name}.xml",
+                    f"--cov-report=xml:cov/cov-{ci_name}-{conan_version_stripped}.xml",
                     "--cov=conan_unified_api", "--cov-branch", "--cov-append", "--capture=no"], 
                     check=True)
     os.environ["SKIP_CREATE_CONAN_TEST_DATA"]="True" # enable after first run
