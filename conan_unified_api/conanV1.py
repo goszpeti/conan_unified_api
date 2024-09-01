@@ -243,7 +243,8 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 self._client_cache.cache_folder)[0].upper()
             short_home = os.path.join(drive, os.sep, ".conan")
         os.makedirs(short_home, exist_ok=True)
-        return Path(short_home)
+        self._short_path_root = Path(short_home)
+        return self._short_path_root
 
     def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path otherwise
