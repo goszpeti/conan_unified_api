@@ -63,7 +63,7 @@ def ConanServer():
 def test_output():
     print("\n********************** Starting TEST ********************************")
     yield
-    print("\n********************** Finished TEST ********************************")
+    print("********************** Finished TEST ********************************\n")
 
 
 @pytest.fixture()
