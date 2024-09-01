@@ -9,7 +9,7 @@ import sys
 conan_major = 1
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--conan_major_version", type=str)
+parser.add_argument("--conan_major_version", type=str, default="1")
 
 args = parser.parse_args()
 conan_major = args.conan_major_version
@@ -24,12 +24,13 @@ os.system("pip install setuptools wheel")
 ci_name = platform.system() + "_Py" + "_".join(map(str, sys.version_info[0:2]))
 for conan_version in test_versions[conan_major]:
 
-    os.system(f"pip install conan{conan_version} --use-pep517 --no-build-isolation")
+    subprocess.run(["pip", "install", f"conan{conan_version}", 
+                    "--use-pep517"], check=True)  # "--no_build_isolation"
     if conan_major=="2":
         os.system(f"pip install conan_server{conan_version} --use-pep517")
     conan_version_stripped = conan_version.strip("==").strip("~=")
     if "<" in conan_version_stripped:
-        conan_version_stripped = conan_version_stripped.strip("<") + "-latest"
+        conan_version_stripped = str(int(conan_version_stripped.strip("<")) - 1) + "-latest"
     subprocess.run(["pytest", "-v", "test", f"--junit-xml=./results/result-unit-{conan_version_stripped}.xml",
                     f"--cov-report=xml:cov/cov-{ci_name}.xml",
                     "--cov=conan_unified_api", "--cov-branch", "--cov-append", "--capture=no"], 

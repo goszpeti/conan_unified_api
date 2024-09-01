@@ -2,6 +2,7 @@
 cache.json
 cacheV2.json
 results
+cov
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
