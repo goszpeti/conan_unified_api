@@ -181,6 +181,8 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             found_pkgs = self.get_remote_pkgs_from_ref(conan_ref, remote_name, query)
         except Exception:  # no problem, next
             return []
+        if not found_pkgs:
+            return []
 
         # remove debug releases
         no_debug_pkgs = list(filter(lambda pkg: 

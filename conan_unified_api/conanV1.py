@@ -52,6 +52,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             self.logger.info, CONAN_LOG_PREFIX), LoggerWriter(self.logger.error, CONAN_LOG_PREFIX)))
         self._conan.user_io = UserIO(out=ConanOutput(LoggerWriter(
             self.logger.info, CONAN_LOG_PREFIX), LoggerWriter(self.logger.error, CONAN_LOG_PREFIX)))
+        # TODO: not sure if quiet_output should be set
         self._conan.create_app()
         self._conan.user_io.disable_input()  # error on inputs - nowhere to enter
         if self._conan.app:
@@ -465,8 +466,12 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         conan_ref = self.conan_ref_from_reflike(conan_ref)
 
         found_pkgs: List[ConanPkg] = []
-        search_results = self._conan.search_packages(
-            conan_ref.full_str(), query=query, remote_name=remote_name).get("results", None)
+        try:
+            search_results = self._conan.search_packages(
+                conan_ref.full_str(), query=query, remote_name=remote_name).get("results", None)
+        except Exception as e:
+            self.logger.debug("Error while searching for %s in %s: %s", conan_ref, remote_name, str(e) )
+            return []
         if search_results:
             found_pkgs = search_results[0].get("items")[0].get("packages")
 

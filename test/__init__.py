@@ -30,7 +30,9 @@ conan_api = ConanApiFactory()
 TEST_REF = "example/9.9.9@local/testing"
 test_ref_obj = ConanRef.loads(TEST_REF)
 TEST_REF_OFFICIAL = "example/1.0.0@_/_"
+test_ref_official_obj = ConanRef.loads(TEST_REF_OFFICIAL)
 TEST_REF_NO_SETTINGS = "nocompsettings/1.0.0@local/no_sets"
+INVALID_TEST_REF = "invalid/notexist@local/testing"
 SKIP_CREATE_CONAN_TEST_DATA = str2bool(
     os.getenv("SKIP_CREATE_CONAN_TEST_DATA", "False"))
 TEST_REMOTE_NAME = "local"

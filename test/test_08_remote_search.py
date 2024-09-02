@@ -1,10 +1,11 @@
 
 import pytest
-from test import TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL, TEST_REMOTE_NAME
+from test import (INVALID_TEST_REF, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL, TEST_REMOTE_NAME, 
+                  test_ref_obj, test_ref_official_obj)
 from test.conan_helper import conan_install_ref, conan_remove_ref
 
 from conan_unified_api import conan_version
-from conan_unified_api.types import ConanRef
+from conan_unified_api.types import ConanPkgRef, ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
 
 
@@ -73,3 +74,24 @@ def test_search_for_all_packages(conan_api: ConanUnifiedApi):
     res = conan_api.search_recipe_all_versions_in_remotes(TEST_REF)
     assert len(res) == 2
     assert TEST_REF in str(res)
+
+
+@pytest.mark.parametrize("query, remote, expected",
+                         [(TEST_REF, "local", [test_ref_obj]),
+                          (TEST_REF, "all", [test_ref_obj]),
+                          (TEST_REF_OFFICIAL, "local", []),  # does not work
+                          ("example*", "local", [test_ref_official_obj, test_ref_obj]),
+                         ],)
+def test_search_recipes_in_remotes(conan_api: ConanUnifiedApi, query: str, remote: str,
+                                   expected: list[ConanRef]):
+    """ Test queries for conan search"""
+    assert expected == conan_api.search_recipes_in_remotes(query, remote)
+
+
+@pytest.mark.parametrize("ref", [TEST_REF, TEST_REF_OFFICIAL],)
+def test_get_remote_pkg_from_id(conan_api: ConanUnifiedApi, ref: str):
+    """ Test finding the ConanPkg from the ConanPkgRef """
+    pkg, _ = conan_api.find_best_matching_package_in_remotes(ref)
+    assert len(pkg) >= 1
+    assert pkg[0] == conan_api.get_remote_pkg_from_id(
+        ConanPkgRef.loads(ref + ":" + pkg[0].get("id", "")))
