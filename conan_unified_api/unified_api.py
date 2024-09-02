@@ -412,7 +412,10 @@ class ConanUnifiedApi():
     @abstractmethod
     def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
         """ Search in all remotes for a specific query. 
-        Returns a list of unique and ordered ConanRefs. """
+        Returns a list of unique and ordered ConanRefs. 
+        Limitation: Can't handle long canonical refs like mylib/1.0.0@_/_.
+        Must use mylib/1.0.0.
+        """
         raise NotImplementedError
 
     @abstractmethod

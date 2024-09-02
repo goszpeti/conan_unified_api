@@ -1,7 +1,7 @@
 
 import pytest
-from test import TEST_REF, TEST_REMOTE_NAME, test_ref_obj
-from test.conan_helper import conan_install_ref, conan_remove_ref
+from test import TEST_REF, TEST_REF_OFFICIAL, TEST_REMOTE_NAME, test_ref_obj
+from test.conan_helper import conan_install_ref, conan_remove_ref, get_profiles
 
 from conan_unified_api.types import ConanRef
 from conan_unified_api.unified_api import ConanUnifiedApi
@@ -53,25 +53,44 @@ def test_get_conanfile_path(conan_api: ConanUnifiedApi):
 
 
 def test_get_local_pkgs_from_ref(conan_api: ConanUnifiedApi):
+    # install all packages
+    for profile in get_profiles():
+        for option in ["True", "False"]:
+            conan_install_ref(TEST_REF, "-o shared=" + option, profile)
     pkgs = conan_api.get_local_pkgs_from_ref(TEST_REF)
-    assert pkgs # TODO
+    assert len(pkgs) == 4
 
 
 def test_get_package_folder(conan_api: ConanUnifiedApi):
     pkgs = conan_api.get_local_pkgs_from_ref(TEST_REF)
     pkg_path = conan_api.get_package_folder(TEST_REF, pkgs[0].get("id", ""))
-    assert pkg_path.exists() # TODO
+    assert pkg_path.exists() # TODO better check
 
 # @abstractmethod
 # def remove_reference(self, conan_ref: ConanRef, pkg_id: str = ""):
 #     """ Remove a conan reference and it's package if specified via id """
 #     raise NotImplementedError
 
-# @abstractmethod
-# def find_best_matching_local_package(self, conan_ref: ConanRef,
-#                                         conan_options: Optional[ConanOptions] = None) -> ConanPkg:
-#     """ Find a package in the local cache """
-#     raise NotImplementedError
+
+@pytest.mark.parametrize("ref, option_key, option_value",
+                         [(TEST_REF, "shared", True),
+                          (TEST_REF_OFFICIAL, "", None),
+                          ],)
+def test_find_best_matching_local_package(conan_api: ConanUnifiedApi, ref: str, 
+                                          option_key: str, option_value):
+    """ Test find a package in the local cache """
+    option = None
+    if option_key:
+        option = {option_key: option_value}
+    conan_api.get_path_or_auto_install(test_ref_obj, option)
+    matching_pkg = conan_api.find_best_matching_local_package(TEST_REF, option)
+    assert matching_pkg.get("id")
+    assert matching_pkg.get("options")
+    assert matching_pkg.get("settings")
+
+    if option_key:
+        assert matching_pkg.get("options", {})[option_key] == option_value
+    
 
 # @abstractmethod
 # def get_best_matching_local_package_path(self, conan_ref: ConanRef,

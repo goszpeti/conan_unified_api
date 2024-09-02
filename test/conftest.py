@@ -63,7 +63,7 @@ def ConanServer():
 def test_output():
     print("\n********************** Starting TEST ********************************")
     yield
-    print("********************** Finished TEST ********************************\n")
+    print("\n********************** Finished TEST ********************************\n")
 
 
 @pytest.fixture()
@@ -170,7 +170,7 @@ def create_test_data(paths):
     profiles_path = paths.testdata_path / "conan" / "profile"
 
     args = []
-    for arg in ["", "-o shared=False"]:
+    for arg in ["-o shared=True", "-o shared=False"]: 
         for profile in get_profiles():
             profile_path = profiles_path / profile
             args.append(f"-pr {str(profile_path)} {arg}")
