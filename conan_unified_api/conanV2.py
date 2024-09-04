@@ -561,7 +561,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                                                      package_query=query)
             if search_results:
                 latest_rev = self._conan.list.latest_recipe_revision(
-                    conan_ref, remote_obj)
+                                                                  conan_ref, remote_obj)
                 if latest_rev:
                     found_pkgs_dict = search_results.recipes.get(str(conan_ref), {}).get(
                         "revisions", {}).get(latest_rev.revision, {}).get("packages", {})

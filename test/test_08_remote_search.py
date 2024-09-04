@@ -1,8 +1,9 @@
 
+from typing import List
 import pytest
-from test import (INVALID_TEST_REF, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL, TEST_REMOTE_NAME, 
+from test import (TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL, TEST_REMOTE_NAME, 
                   test_ref_obj, test_ref_official_obj)
-from test.conan_helper import conan_install_ref, conan_remove_ref
+from test.conan_helper import conan_remove_ref
 
 from conan_unified_api import conan_version
 from conan_unified_api.types import ConanPkgRef, ConanRef
@@ -44,8 +45,10 @@ def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
     conan_remove_ref(TEST_REF)
     default_settings = conan_api.get_default_settings()
 
+    # check that inputing True as bool changes it in return to string 
+    # - otherwise we cannot handle later comparisons.
     pkgs, remote = conan_api.find_best_matching_package_in_remotes(ConanRef.loads(TEST_REF),
-                                                                   {"shared": "True"})
+                                                                   {"shared": True})
     assert remote == TEST_REMOTE_NAME
     assert len(pkgs) > 0
     pkg = pkgs[0]
@@ -83,7 +86,7 @@ def test_search_for_all_packages(conan_api: ConanUnifiedApi):
                           ("example*", "local", [test_ref_official_obj, test_ref_obj]),
                          ],)
 def test_search_recipes_in_remotes(conan_api: ConanUnifiedApi, query: str, remote: str,
-                                   expected: list[ConanRef]):
+                                   expected: List["ConanRef"]):
     """ Test queries for conan search"""
     assert expected == conan_api.search_recipes_in_remotes(query, remote)
 

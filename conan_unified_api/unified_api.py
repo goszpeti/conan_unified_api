@@ -290,7 +290,7 @@ class ConanUnifiedApi():
         raise NotImplementedError
 
     @abstractmethod
-    def get_path_or_auto_install(self, conan_ref: Union[ConanRef, str],
+    def get_path_with_auto_install(self, conan_ref: Union[ConanRef, str],
                                  conan_options: Optional[ConanOptions] = None,
                                  update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and package folder of a conan reference 

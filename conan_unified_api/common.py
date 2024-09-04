@@ -1,7 +1,9 @@
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+
 from .base import INVALID_PATH_VALUE, conan_version
+from .base.helper import str2bool
 from .base.logger import Logger
 from .unified_api import ConanUnifiedApi
 from .types import (ConanPkg, ConanRef, ConanPkgRef,
@@ -64,7 +66,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             Logger().error(f"Can't install package '<b>{str(conan_ref)}</b>': {str(e)}")
             return "", Path(INVALID_PATH_VALUE)
 
-    def get_path_or_auto_install(self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None,
+    def get_path_with_auto_install(self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None,
                                  update=False) -> Tuple[ConanPackageId, ConanPackagePath]:
         """ Return the pkg_id and package folder of a conan reference 
         and auto-install it with the best matching package, if it is not available """
@@ -151,8 +153,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             conan_options: Optional[ConanOptions] = None) -> Tuple[List[ConanPkg], str]:
         """ Find a package with options in the remotes """
         for remote in self.get_remotes():
-            packages = self.find_best_matching_packages(conan_ref, conan_options,
-                                                        remote.name)
+            packages = self.find_best_matching_packages(conan_ref, conan_options, remote.name)
             if packages:
                 return (packages, remote.name)
         Logger().info(
@@ -194,9 +195,17 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
         # filter the found packages by the user options
         if conan_options:
-            found_pkgs = list(filter(lambda pkg: 
-                        conan_options.items() <= pkg.get("options", {}).items(), 
-                        found_pkgs))
+
+            for pkg in found_pkgs:
+                self._convert_options_to_native_ref_values(pkg.get("options", {}), conan_options)
+    
+            # found_pkgs = list(filter(lambda pkg:
+            #                          self._are_option_compatible(
+            #                              conan_options, pkg.get("options", {})),
+            #             found_pkgs))
+            found_pkgs = list(filter(lambda pkg:
+                        conan_options.items() <= pkg.get("options", {}).items(), found_pkgs))
+
             if not found_pkgs:
                 return found_pkgs
         # get a set of existing options and reduce default options with them
@@ -207,8 +216,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             min_opts_list = min_opts_set.pop()
 
         # this calls external code of the recipe
-        _, default_options = self.get_options_with_default_values(
-            conan_ref, remote_name)
+        _, default_options = self.get_options_with_default_values(conan_ref, remote_name)
 
         if default_options:
             default_options = dict(
@@ -257,6 +265,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 default_options.update({default_option_str[0]: default_option_str[1]})
         else:
             default_options = default_options_raw
+        ConanCommonUnifiedApi._convert_options_to_str_values(default_options)
         return default_options
 
     @staticmethod
@@ -339,3 +348,28 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             else:
                 remote_groups[remote.url] = [remote]
         return remote_groups
+
+    @staticmethod
+    def _convert_options_to_str_values(options: ConanOptions):
+        for key, value in options.items():
+            if value == True: # need explicitly True  # noqa: E712
+                options[key] = "True"
+            elif value in [False, 0]:
+                options[key] = "False"
+        return options
+    
+    @staticmethod
+    def _convert_options_to_native_ref_values(options_to_convert: ConanOptions, ref_options: ConanOptions):
+        for key, value in options_to_convert.items():
+            if str(value) not in["True", "False", "0"] or key not in ref_options:
+                continue
+            if isinstance(ref_options[key], bool):
+                options_to_convert[key] = str2bool(value)
+            elif isinstance(ref_options[key], str):
+                options_to_convert[key] = str(value)
+
+    @staticmethod
+    def _are_option_compatible(options_ref: ConanOptions, options_other: ConanOptions) -> bool:
+        options_ref_str = ConanCommonUnifiedApi._convert_options_to_str_values(options_ref.copy())
+        options_other_str = ConanCommonUnifiedApi._convert_options_to_str_values(options_other.copy())
+        return options_ref_str.items() <= options_other_str.items()

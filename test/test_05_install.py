@@ -17,10 +17,10 @@ def test_get_path_or_install(conan_api: ConanUnifiedApi):
     conan_remove_ref(TEST_REF)
 
     # Gets package path / installs the package
-    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(TEST_REF))
+    id, package_folder = conan_api.get_path_with_auto_install(ConanRef.loads(TEST_REF))
     assert (package_folder / dir_to_check).is_dir()
     # check again for already installed package
-    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(TEST_REF))
+    id, package_folder = conan_api.get_path_with_auto_install(ConanRef.loads(TEST_REF))
     assert (package_folder / dir_to_check).is_dir()
 
 
@@ -31,7 +31,7 @@ def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
     """
     # This package has an option "shared" and is fairly small.
     conan_remove_ref(TEST_REF)
-    id, package_folder = conan_api.get_path_or_auto_install(
+    id, package_folder = conan_api.get_path_with_auto_install(
         ConanRef.loads(TEST_REF), {"shared": "True"})
     if platform.system() == "Windows":
         assert (package_folder / "bin" / "python.exe").is_file()
@@ -68,7 +68,7 @@ def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
     conan_remove_ref(ref)
     capfd.readouterr() # remove can result in error message - clear
 
-    id, package_folder = conan_api.get_path_or_auto_install(ConanRef.loads(ref))
+    id, package_folder = conan_api.get_path_with_auto_install(ConanRef.loads(ref))
     assert (package_folder / "bin").is_dir()
     captured = capfd.readouterr()
     assert "ERROR" not in captured.err
