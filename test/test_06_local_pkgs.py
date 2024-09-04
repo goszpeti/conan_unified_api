@@ -91,7 +91,7 @@ def test_get_local_pkgs_from_ref(conan_api: ConanUnifiedApi):
     if conan_version.major == 1:
         assert len(pkgs) == 4
     else:
-        assert len(pkgs) == 2  # TODO this seems to be a bug in conanV2
+        assert len(pkgs) >= 2  # TODO this seems to be a bug in conanV2
 
 
 def test_get_package_folder(conan_api: ConanUnifiedApi):

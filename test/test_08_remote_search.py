@@ -52,7 +52,7 @@ def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
     assert remote == TEST_REMOTE_NAME
     assert len(pkgs) > 0
     pkg = pkgs[0]
-    assert {"shared": "True"}.items() <= pkg.get("options", {}).items()
+    assert {"shared": True}.items() <= pkg.get("options", {}).items()
 
     for setting in default_settings:
         if setting in pkg.get("settings", {}).keys():
