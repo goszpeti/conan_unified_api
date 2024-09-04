@@ -352,10 +352,15 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
     @staticmethod
     def _convert_options_to_str_values(options: ConanOptions):
         for key, value in options.items():
-            if value == True: # need explicitly True  # noqa: E712
-                options[key] = "True"
-            elif value in [False, 0]:
-                options[key] = "False"
+            # convert "ANY" to ["ANY"]
+            # this is done to ensure compatiblity between Conan 1 (accepts both) and 2 (accepts onyl list)
+            if value == "ANY":
+                options[key] = ["ANY"]
+                continue
+            if isinstance(value, list):
+                options[key] = list(map(str, value))
+                continue
+            options[key] = str(value)
         return options
     
     @staticmethod

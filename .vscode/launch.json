@@ -11,11 +11,12 @@
         },
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "subProcess": true,
+            "justMyCode": false,
         },
         {
             "name": "Python: Testing",
@@ -27,7 +28,7 @@
             "python": "${command:python.interpreterPath}",
             "env": {
                 "CONAN_UNIFIED_API_DEBUG_LEVEL": "2",
-                "SKIP_CREATE_CONAN_TEST_DATA": "False",
+                "SKIP_CREATE_CONAN_TEST_DATA": "True",
             },
         },
 

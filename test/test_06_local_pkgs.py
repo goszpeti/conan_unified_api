@@ -77,8 +77,8 @@ def test_get_local_pkg_from_path(conan_api: ConanUnifiedApi):
 
 def test_get_options_with_default_values(conan_api: ConanCommonUnifiedApi):
     available_options, default_options = conan_api.get_options_with_default_values(test_ref_obj)
-    assert available_options.possible_values == {'shared': [
-        'True', 'False'], 'fPIC2': ['True', 'False'], 'variant': ['ANY']}
+    assert conan_api._are_option_compatible(available_options, {'shared': [
+        'True', 'False'], 'fPIC2': ['True', 'False'], 'variant': ['ANY']})
     conan_api._are_option_compatible(
         default_options, {"shared": True, 'fPIC2': True, "variant": "var1"})
 
