@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from conan_unified_api.base import INVALID_PATH_VALUE
 from conan_unified_api.types import ConanRef
 from test import TEST_REF
 

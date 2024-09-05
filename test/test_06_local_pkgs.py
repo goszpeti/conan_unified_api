@@ -22,9 +22,10 @@ def test_inspect(conan_api: ConanUnifiedApi):
     assert inspect["no_copy_source"] == True
 
 
-@pytest.mark.skip(reason="implementaion not finished yet")
 def test_alias(conan_api: ConanUnifiedApi):
-    alias_ref = "example/1.1.1@user/new_channel"
+    if conan_version.major == 2: # skip for conan 2
+        return
+    alias_ref = "example/(1.1.1)@user/new_channel"
     conan_api.alias(alias_ref, TEST_REF)
     assert conan_api.get_local_pkgs_from_ref(ConanRef.loads(alias_ref))
 
