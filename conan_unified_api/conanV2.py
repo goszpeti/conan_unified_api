@@ -126,20 +126,20 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         # no serialization, like in ConanV1
         return result
 
-    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
-        # TODO does not seem to copy the package yet
-        conan_ref = self.conan_ref_from_reflike(conan_ref)
-        conan_target_ref = self.conan_ref_from_reflike(conan_target_ref)
+    # def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
+    #     # TODO does not seem to copy the package yet
+    #     conan_ref = self.conan_ref_from_reflike(conan_ref)
+    #     conan_target_ref = self.conan_ref_from_reflike(conan_target_ref)
 
-        template = self._conan.new.get_builtin_template("alias")
-        content = self._conan.new.render(template, {
-            "name": conan_ref.name,
-            "version": conan_ref.version,
-            "target": conan_target_ref.version})
-        conanfile_path = Path(mkdtemp()) / "conanfile_temp.py"
-        conanfile_path.write_text(content.get("conanfile.py", ""))
-        self._conan.export.export(str(conanfile_path), conan_ref.name,
-                                  conan_ref.version, conan_ref.user, conan_ref.channel)
+    #     template = self._conan.new.get_builtin_template("alias")
+    #     content = self._conan.new.render(template, {
+    #         "name": conan_ref.name,
+    #         "version": conan_ref.version,
+    #         "target": conan_target_ref.version})
+    #     conanfile_path = Path(mkdtemp()) / "conanfile_temp.py"
+    #     conanfile_path.write_text(content.get("conanfile.py", ""))
+    #     self._conan.export.export(str(conanfile_path), conan_ref.name,
+    #                               conan_ref.version, conan_ref.user, conan_ref.channel)
 
     def remove_locks(self):
         pass  # command does not exist
@@ -381,9 +381,11 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             else:
                 app = ConanApp(self._conan)
             conanfile = app.loader.load_conanfile(path, conan_ref)
-            default_options = conanfile.default_options
-            available_options = conanfile.options.possible_values
+            default_options = {}
+            if conanfile.default_options is not None:
+                default_options = conanfile.default_options
             default_options = self._resolve_default_options(default_options)
+            available_options = conanfile.options.possible_values
         except Exception as e:  # silent error - if we have no options don't spam the user
             Logger().debug(
                 f"Error while getting default options for {str(conan_ref)}: {str(e)}")

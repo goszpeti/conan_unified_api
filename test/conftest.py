@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import os
 import platform
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -103,8 +104,7 @@ def check_if_process_running(process_name, kill=False, cmd_narg=1, timeout_s=10)
 
 
 def run_conan_server():
-    os.system("conan_server")
-
+    subprocess.run("conan_server")
 
 def start_conan_server():
     # Setup Server config
