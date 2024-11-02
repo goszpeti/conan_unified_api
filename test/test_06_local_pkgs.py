@@ -23,13 +23,15 @@ def test_inspect(conan_api: ConanUnifiedApi):
 
 
 def test_alias(conan_api: ConanUnifiedApi):
+    """ Test that alias creates the ref locally -> will only have export folder """
     if conan_version.major == 2: # skip for conan 2
         return
     alias_ref = "example/(1.1.1)@user/new_channel"
-    conan_api.alias(alias_ref, TEST_REF)
-    assert conan_api.get_local_pkgs_from_ref(ConanRef.loads(alias_ref))
-
-    conan_remove_ref(alias_ref)
+    try:
+        conan_api.alias(alias_ref, TEST_REF)
+        assert conan_api.get_export_folder(ConanRef.loads(alias_ref)).exists()
+    finally:
+        conan_remove_ref(alias_ref)
 
 def test_conan_find_local_pkg(conan_api: ConanUnifiedApi):
     """
