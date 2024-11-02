@@ -3,6 +3,7 @@ import os
 import pytest
 from conan_unified_api.types import ConanRef
 from test import TEST_REF
+from pytest_check import check
 
 from conan_unified_api import conan_version
 from conan_unified_api.unified_api import ConanUnifiedApi
@@ -41,7 +42,8 @@ def new_editable():
 
 def test_get_editable(conan_api: ConanUnifiedApi, editable_path, new_editable):
     broken_editable = conan_api.get_editable(TEST_REF)
-    assert broken_editable is None
+    with check:
+     assert broken_editable is None
     
     new_editable(TEST_EDITABLE_REF, editable_path)
     editable = conan_api.get_editable(TEST_EDITABLE_REF)
