@@ -1,28 +1,35 @@
 from __future__ import annotations
-from contextlib import redirect_stderr, redirect_stdout
-from conans.errors import ConanException  # noqa: F401
-from dataclasses import dataclass
-from pathlib import Path
+
 import os
 import platform
 import pprint
+from contextlib import redirect_stderr, redirect_stdout
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+
+from conans.errors import ConanException  # noqa: F401
 from typing_extensions import TypeAlias
 
 from conan_unified_api import conan_version
 
 if conan_version.major == 1:
     from conans.model.ref import ConanFileReference, PackageReference
-    from conans.paths.package_layouts.package_editable_layout import PackageEditableLayout  # noqa: F401
+    from conans.paths.package_layouts.package_editable_layout import (
+        PackageEditableLayout,  # noqa: F401
+    )
+
     if platform.system() == "Windows":
-        from conans.util.windows import CONAN_REAL_PATH, CONAN_LINK
+        from conans.util.windows import CONAN_LINK, CONAN_REAL_PATH
 else:
-    from conans.model.recipe_ref import RecipeReference as ConanFileRef
     from conans.model.package_ref import PkgReference
+    from conans.model.recipe_ref import RecipeReference as ConanFileRef
+
     class PackageReference(PkgReference):
-        """ Compatibility class for changed package_id attribute """
+        """Compatibility class for changed package_id attribute"""
+
         ref: ConanRef
-        
+
         @property
         def id(self):
             return self.package_id
@@ -30,18 +37,20 @@ else:
         @staticmethod
         def loads(text: str) -> ConanPkgRef:  # type: ignore
             pkg_ref = PkgReference.loads(text)
-            return PackageReference(pkg_ref.ref, pkg_ref.package_id, 
-                                    pkg_ref.revision,pkg_ref.timestamp)
+            return PackageReference(
+                pkg_ref.ref, pkg_ref.package_id, pkg_ref.revision, pkg_ref.timestamp
+            )
 
     class ConanFileReference(ConanFileRef):
-        """ Compatibility class for validation in loads method  """
+        """Compatibility class for validation in loads method"""
+
         name: str
         version: str
         user: Optional[str]
         channel: Optional[str]
 
         @staticmethod
-        def loads(text: str, validate=True) -> ConanRef: # type: ignore
+        def loads(text: str, validate=True) -> ConanRef:  # type: ignore
             # add back support for @_/_ canonical refs to handle this uniformly
             # Simply remove it before passing it to ConanFileRef
             if text.endswith("@_/_"):
@@ -50,14 +59,15 @@ else:
             if validate:
                 # validate_ref creates an own output stream which can't log to console
                 # if it is running as a gui application
-                devnull = open(os.devnull, 'w')
+                devnull = open(os.devnull, "w")
                 with redirect_stdout(devnull):
                     with redirect_stderr(devnull):
                         ref.validate_ref(allow_uppercase=True)
             return ref
 
+
 @dataclass
-class Remote():
+class Remote:
     name: str
     url: str
     verify_ssl: bool
@@ -73,9 +83,9 @@ ConanSettings: TypeAlias = Dict[str, str]
 ConanPackageId: TypeAlias = str
 ConanPackagePath: TypeAlias = Path
 
-    
+
 class ConanPkg(TypedDict, total=False):
-    """ Dummy class to type conan returned package dicts """
+    """Dummy class to type conan returned package dicts"""
 
     id: ConanPackageId
     options: ConanOptions
@@ -85,20 +95,20 @@ class ConanPkg(TypedDict, total=False):
 
 
 @dataclass
-class EditablePkg():
+class EditablePkg:
     conan_ref: str
-    path: str # path to conanfile or folder
+    path: str  # path to conanfile or folder
     output_folder: Optional[str]
 
+
 def pretty_print_pkg_info(pkg_info: ConanPkg) -> str:
-    return pprint.pformat(pkg_info).translate(
-        {ord("{"): None, ord("}"): None, ord("'"): None})
+    return pprint.pformat(pkg_info).translate({ord("{"): None, ord("}"): None, ord("'"): None})
 
 
 class LoggerWriter:
     """
     Dummy stream to log directly to a logger object, when writing in the stream.
-    Used to redirect custom stream from Conan. 
+    Used to redirect custom stream from Conan.
     Adds a prefix to do some custom formatting in the Logger.
     """
 
@@ -111,10 +121,9 @@ class LoggerWriter:
     def write(self, message: str):
         if self.disabled:
             return
-        if message != '\n':
+        if message != "\n":
             self.level(self._prefix + message.strip("\n"))
 
     def flush(self):
-        """ For interface compatiblity """
+        """For interface compatiblity"""
         pass
-
