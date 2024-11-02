@@ -42,11 +42,21 @@ test = [
 ]
 
 [tool.ruff]
-line-length=88
+line-length=96
 target-version = "py38"
 
-[tool.autopep8]
-max_line_length = 88
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "LOG", # flake8-logging
+    "G", # lake8-logging-format
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
