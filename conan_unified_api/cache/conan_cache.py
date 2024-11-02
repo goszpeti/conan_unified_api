@@ -1,19 +1,22 @@
 import json
 from multiprocessing import RLock
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 
 from conan_unified_api.base import conan_version
-from conan_unified_api.base.logger import Logger
 from conan_unified_api.base.helper import delete_path
+from conan_unified_api.base.logger import Logger
+
+from ..common import ConanCommonUnifiedApi
 from ..types import ConanRef
 
 
-class ConanInfoCache():
+class ConanInfoCache:
     """
     This is a cache to accelerate calls which need remote access.
     It also has an option to store the local package path.
     """
+
     CACHE_FILE_NAME = "cache.json"
     if conan_version.major == 2:
         CACHE_FILE_NAME = "cacheV2.json"
@@ -36,7 +39,7 @@ class ConanInfoCache():
         self._load()
 
     def get_similar_remote_pkg_refs(self, name: str, user: str) -> List[ConanRef]:
-        """ Return cached info on remotely available conan refs from the same ref name and user. """
+        """Return cached info on remotely available conan refs from the same ref name and user."""
         if not user:  # official pkgs have no user, substituted by _
             user = "_"
         refs: List[ConanRef] = []
@@ -55,25 +58,22 @@ class ConanInfoCache():
         return refs
 
     def get_all_remote_refs(self) -> List[str]:
-        """ Return all remote references. Updating, when queries finish. """
+        """Return all remote references. Updating, when queries finish."""
         refs = []
         with self._access_lock:
             for name in self._remote_packages:
                 for user in self._remote_packages[name]:
                     for version_channel in self._remote_packages.get(name, {}).get(user, []):
                         version, channel = version_channel.split("/")
-                        refs.append(
-                            str(ConanRef(name, version, user, channel)))
+                        refs.append(str(ConanRef(name, version, user, channel)))
         return refs
 
     def search(self, query: str) -> Set[str]:
         """
-        Return cached info on available conan refs from a query 
+        Return cached info on available conan refs from a query
         """
         with self._access_lock:
-
             remote_refs = set()
-            local_refs = set()
             # try to extract name and user from query
             split_query = query.split("/")
             name = split_query[0]
@@ -86,10 +86,12 @@ class ConanInfoCache():
                 remote_refs.add(str(ref))
             return remote_refs
 
-    def invalidate_remote_package(self, conan_ref: ConanRef):
-        """ Remove a package, wich was removed on the remote """
-        version_channels = self._remote_packages.get(
-            conan_ref.name, {}).get(str(conan_ref.user), [])
+    def invalidate_remote_package(self, conan_ref: Union[ConanRef, str]):
+        """Remove a package, wich was removed on the remote"""
+        conan_ref = ConanCommonUnifiedApi.conan_ref_from_reflike(conan_ref)
+        version_channels = self._remote_packages.get(conan_ref.name, {}).get(
+            str(conan_ref.user), []
+        )
         invalid_version_channel = f"{conan_ref.version}/{conan_ref.channel}"
         if invalid_version_channel in version_channels:
             Logger().debug(f"Invalidated {str(conan_ref)} from remote cache.")
@@ -98,7 +100,7 @@ class ConanInfoCache():
 
     def update_remote_package_list(self, remote_packages: List[ConanRef], invalidate=False):
         """
-        Update the cache with the info of several remote packages. 
+        Update the cache with the info of several remote packages.
         Invalidate option clears the cache.
         """
         with self._access_lock:
@@ -113,20 +115,20 @@ class ConanInfoCache():
                     user = "_"
                     channel = "_"
                 current_version_channel = f"{ref.version}/{channel}"
-                version_channels = set(
-                    self._remote_packages.get(ref.name, {}).get(user, []))
+                version_channels = set(self._remote_packages.get(ref.name, {}).get(user, []))
                 if current_version_channel not in version_channels:
                     version_channels.add(current_version_channel)
                     version_channels_list = list(version_channels)
                     if not self._remote_packages.get(ref.name):
                         self._remote_packages.update({ref.name: {}})
                     self._remote_packages.get(ref.name, {}).update(
-                        {user: version_channels_list})
+                        {user: version_channels_list}
+                    )
 
             self._save()
 
     def _load(self):
-        """ Load the cache. """
+        """Load the cache."""
         json_data = {}
         try:
             with open(self._cache_file, "r") as json_file:
@@ -143,7 +145,7 @@ class ConanInfoCache():
         self._read_only = json_data.get("read_only", False)
 
     def _save(self):
-        """ Write the cache to file. """
+        """Write the cache to file."""
         if self._read_only:
             return
         json_data = {}

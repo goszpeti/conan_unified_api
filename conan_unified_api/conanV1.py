@@ -241,9 +241,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             self._fix_editable_file()  # to not crash conan without this
             return []
 
-    def get_editable(self, conan_ref: Union[ConanRef, str]) -> EditablePkg:
+    def get_editable(self, conan_ref: Union[ConanRef, str]) -> Optional[EditablePkg]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
+        self._conan.create_app(force=True)  # type: ignore # need to possibly reload editables
+
         editable_dict = self._conan.editable_list().get(str(conan_ref), {})
+        if not editable_dict:
+            return None
         return EditablePkg(
             str(conan_ref),
             editable_dict.get("path", INVALID_PATH_VALUE),
@@ -251,11 +255,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         )
 
     def get_editables_package_path(self, conan_ref: Union[ConanRef, str]) -> Path:
+        self._conan.create_app(force=True)  # type: ignore # need to possibly reload editables
         editable_dict = self._conan.editable_list().get(str(conan_ref), {})
         pkg_path = Path(str(editable_dict.get("path", INVALID_PATH_VALUE)))
         return pkg_path
 
     def get_editables_output_folder(self, conan_ref: Union[ConanRef, str]) -> Optional[Path]:
+        self._conan.create_app(force=True)  # type: ignore # need to possibly reload editables
         editable_dict = self._conan.editable_list().get(str(conan_ref), {})
         output_folder = editable_dict.get("output_folder")
         if not output_folder:
