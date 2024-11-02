@@ -1,17 +1,29 @@
 {
-    "editor.defaultFormatter": "ms-python.autopep8",
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
     "editor.formatOnPaste": true,
+    "editor.rulers": [96],
     "git.autofetch": true,
-    "python.analysis.typeCheckingMode": "standard",
+    "ruff.organizeImports": true,
+
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.exclude": [
+        ".venv",
+        "build"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.inlayHints.functionReturnTypes": false,
+    "python.analysis.inlayHints.pytestParameters": false,
+    "python.analysis.inlayHints.variableTypes": false,
+    "python.analysis.autoFormatStrings": true,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "-v",
-        "--junit-xml=${workspaceFolder}/result.xml",
-        "--cov-report=xml:cov.xml",
-        "--cov-report=term",
-        "--cov=conan_wrapper",
-        "--cov-append",
-        "--cov-branch",
+        // "--junit-xml=${workspaceFolder}/result.xml",
+        // "--cov-report=xml:cov.xml",
+        // "--cov-report=term",
+        // "--cov=conan_wrapper",
+        // "--cov-append",
+        // "--cov-branch",
         "--capture=no", // print output
         "--no-cov", // no coverage while debugging
         // "-m conanv2"
@@ -19,20 +31,11 @@
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "python.terminal.activateEnvInCurrentTerminal": true,
     "python.terminal.activateEnvironment": true,
-    "editor.rulers": [
-        88
-    ],
-    "python.analysis.exclude": [
-        "**/*_ui.py",
-        ".venv",
-        "test",
-        "build"
-    ],
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.inlayHints.functionReturnTypes": false,
-    "python.analysis.inlayHints.pytestParameters": false,
-    "python.analysis.inlayHints.variableTypes": false,
-    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
-    "python.analysis.autoFormatStrings": true,
-
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always"
+        }
+    },
 }

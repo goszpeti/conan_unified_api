@@ -11,34 +11,40 @@ from pathlib import Path
 from subprocess import CalledProcessError, check_output
 from threading import Thread
 from typing import Generator
-
 import psutil
 import pytest
 from conan_unified_api import base_path, ConanInfoCache, ConanApiFactory
 from conan_unified_api import conan_version
-from test import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL,
+from . import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL,
                   TEST_REMOTE_NAME, TEST_REMOTE_URL, PathSetup, is_ci_job)
-from test.conan_helper import (add_remote, clean_remotes_on_ci, conan_create,
+from .conan_helper import (add_remote, clean_remotes_on_ci, conan_create,
                                conan_upload, get_profiles, login_test_remote)
-import test.conan_helper
-
+from . import conan_helper
 exe_ext = ".exe" if platform.system() == "Windows" else ""
 conan_server_thread = None
+
+
+# conan = ConanApiFactory()
+# conan.init_api()
+# for i in range(9, 1000):
+#     print(f"Copying index {i}")
+#     conan.alias(f"example/9.9.{i}@local/alias", TEST_REF)
+#     # os.system(f"conan alias example/9.9.{i}@local/alias {TEST_REF}")
 
 
 def pytest_report_teststatus(report, config):
     if report.when == 'call':
         if report.head_line == "test_add_remove_remotes" and report.outcome == "passed":
-            test.conan_helper.TESTED_ADD_REMOVE_REMOTE = True
+            conan_helper.TESTED_ADD_REMOVE_REMOTE = True
         if report.head_line == "test_disable_remotes" and report.outcome == "passed":
-            test.conan_helper.TESTED_DISABLE_REMOTE = True
+            conan_helper.TESTED_DISABLE_REMOTE = True
 
 
 @pytest.fixture()
 def conan_api():
     os.environ["CONAN_NON_INTERACTIVE"] = "True"  # don't hang is smth. goes wrong
     os.environ["CONAN_REVISIONS_ENABLED"] = "1"
-    yield test.conan_api
+    yield conan_helper.conan_api
     # delete cache file
     if (base_path / ConanInfoCache.CACHE_FILE_NAME).exists():
         try:
@@ -188,15 +194,6 @@ def create_test_data(paths):
                                 "conanfile_no_settingsV2.py")
     conan_create(conanfile_path,  TEST_REF_NO_SETTINGS)
     conan_upload(TEST_REF_NO_SETTINGS)
-
-    # create a 1000 pkgs..
-    # conan = ConanApi()
-    # conan.init_api()
-    # for i in range(9, 1000):
-    #     print(f"Aliasing wiht index {i}")
-    #     conan.alias(f"example/9.9.{i}@local/alias", TEST_REF)
-    #     # os.system(f"conan alias example/9.9.{i}@local/alias {TEST_REF}")
-
 
 def create_test_ref(ref, paths, create_params=[""]):
     if conan_version.major == 2:

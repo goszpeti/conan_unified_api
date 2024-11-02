@@ -223,7 +223,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 filter(lambda opt: opt[0] in min_opts_list, default_options.items()))
             # patch user input into default options to combine the two
             default_options.update(conan_options)
-            # convert vals to string
+            # convert vals to string TODO use new fcn
             default_str_options: Dict[str, str] = dict([key, str(value)]
                                                        for key, value in default_options.items())
             if len(found_pkgs) > 1:
