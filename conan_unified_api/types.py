@@ -6,7 +6,7 @@ import pprint
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union
 
 from conans.errors import ConanException  # noqa: F401
 from typing_extensions import TypeAlias
@@ -31,11 +31,11 @@ else:
         ref: ConanRef
 
         @property
-        def id(self):
+        def id(self) -> str:
             return self.package_id
 
         @staticmethod
-        def loads(text: str) -> ConanPkgRef:  # type: ignore
+        def loads(text: str) -> ConanPkgRef:
             pkg_ref = PkgReference.loads(text)
             return PackageReference(
                 pkg_ref.ref, pkg_ref.package_id, pkg_ref.revision, pkg_ref.timestamp
@@ -50,7 +50,7 @@ else:
         channel: Optional[str]
 
         @staticmethod
-        def loads(text: str, validate=True) -> ConanRef:  # type: ignore
+        def loads(text: str, validate: bool = True) -> ConanRef:  # type: ignore
             # add back support for @_/_ canonical refs to handle this uniformly
             # Simply remove it before passing it to ConanFileRef
             if text.endswith("@_/_"):
@@ -59,9 +59,8 @@ else:
             if validate:
                 # validate_ref creates an own output stream which can't log to console
                 # if it is running as a gui application
-                devnull = open(os.devnull, "w")
-                with redirect_stdout(devnull):
-                    with redirect_stderr(devnull):
+                with open(os.devnull, "w") as devnull:
+                    with redirect_stdout(devnull), redirect_stderr(devnull):
                         ref.validate_ref(allow_uppercase=True)
             return ref
 
@@ -114,16 +113,15 @@ class LoggerWriter:
 
     disabled = False
 
-    def __init__(self, level, prefix: str):
+    def __init__(self, level: Callable, prefix: str):
         self.level = level
         self._prefix = prefix
 
-    def write(self, message: str):
+    def write(self, message: str) -> None:
         if self.disabled:
             return
         if message != "\n":
             self.level(self._prefix + message.strip("\n"))
 
-    def flush(self):
+    def flush(self) -> None:
         """For interface compatiblity"""
-        pass

@@ -4,7 +4,7 @@ import platform
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from tempfile import gettempdir
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
 from unittest.mock import patch
 
 from typing_extensions import Self
@@ -46,11 +46,16 @@ current_path = Path(__file__).parent
 class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     """Wrapper around ConanAPIV1"""
 
-    def __init__(self, init=True, logger: Optional[logging.Logger] = None, mute_logging=False):
-        self._conan: "ConanAPIV1"
-        self._client_cache: "ClientCache"
+    def __init__(
+        self,
+        init: bool = True,
+        logger: Optional[logging.Logger] = None,
+        mute_logging: bool = False,
+    ):
+        self._conan: ConanAPIV1
+        self._client_cache: ClientCache
         self._short_path_root = Path("Unknown")
-        self.info_cache: "ConanInfoCache"
+        self.info_cache: ConanInfoCache
         super().__init__(init, logger, mute_logging)
 
     def init_api(self) -> Self:
@@ -79,10 +84,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         else:
             raise NotImplementedError
 
-        def create_app(self, quiet_output=None, force=False):
+        def create_app(self, quiet_output=None, force: bool = False):
             if self.app and not force:
                 return self.app
-            self.app = ConanApp(
+            self.app = ConanApp(  # noqa: RET503
                 self.cache_folder,
                 self.user_io,
                 self.http_requester,
@@ -104,7 +109,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
         return self
 
-    def _fix_editable_file(self):
+    def _fix_editable_file(self) -> None:
         """Ensure editables json is valid (Workaround for empty json bug)
         Must work without using ConanAPIV1, because it can't be called without this
         """
@@ -123,7 +128,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     ### General commands ###
 
-    def remove_locks(self):
+    def remove_locks(self) -> None:
         self._conan.remove_locks()
         self.logger.debug("Removed Conan cache locks.")
 
@@ -136,7 +141,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
             infos: List[Dict[str, Any]] = CommandOutputer(
                 self._conan.out, self._client_cache
-            )._grab_info_data(deps_graph[0], True)
+            )._grab_info_data(deps_graph[0], grab_paths=True)
             # insert original ref as 0th element
             own_info = {}
             for info in infos:
@@ -154,7 +159,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def inspect(
         self,
         conan_ref: Union[ConanRef, str],
-        attributes: List[str] = [],
+        attributes: Sequence[str] = [],
         remote_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         with save_sys_path():  # can change path or run arbitrary code and thus break things
@@ -165,7 +170,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 )
             )
 
-    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
+    def alias(
+        self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]
+    ) -> None:
         self._conan.export_alias(str(conan_ref), conan_target_ref)
 
     def get_profiles(self) -> List[str]:
@@ -178,7 +185,6 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return dict(profile.settings)
 
     def get_default_settings(self) -> ConanSettings:
-        # type: ignore
         default_profile = self._client_cache.default_profile
         if not default_profile:
             return {}
@@ -257,8 +263,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
     def get_editables_package_path(self, conan_ref: Union[ConanRef, str]) -> Path:
         self._conan.create_app(force=True)  # type: ignore # need to possibly reload editables
         editable_dict = self._conan.editable_list().get(str(conan_ref), {})
-        pkg_path = Path(str(editable_dict.get("path", INVALID_PATH_VALUE)))
-        return pkg_path
+        return Path(str(editable_dict.get("path", INVALID_PATH_VALUE)))
 
     def get_editables_output_folder(self, conan_ref: Union[ConanRef, str]) -> Optional[Path]:
         self._conan.create_app(force=True)  # type: ignore # need to possibly reload editables
@@ -326,12 +331,12 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             if layout:
                 return Path(layout.conanfile())
         except Exception as e:
-            raise ConanException(f"Can't get conanfile: {str(e)}")
+            raise ConanException(f"Can't get conanfile: {e!s}")
         return invalid_path
 
     # Remotes
 
-    def get_remotes(self, include_disabled=False) -> List[Remote]:
+    def get_remotes(self, include_disabled: bool = False) -> List[Remote]:
         remotes = []
         try:
             if include_disabled:
@@ -339,27 +344,27 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             else:
                 remotes = self._client_cache.registry.load_remotes().values()
         except Exception as e:
-            raise ConanException(f"Error while reading remotes file: {str(e)}")
+            raise ConanException(f"Error while reading remotes file: {e!s}")
         return remotes  # type: ignore
 
-    def add_remote(self, remote_name: str, url: str, verify_ssl: bool):
+    def add_remote(self, remote_name: str, url: str, verify_ssl: bool) -> None:
         self._conan.remote_add(remote_name, url, verify_ssl)
 
-    def rename_remote(self, remote_name: str, new_name: str):
+    def rename_remote(self, remote_name: str, new_name: str) -> None:
         self._conan.remote_rename(remote_name, new_name)
 
-    def remove_remote(self, remote_name: str):
+    def remove_remote(self, remote_name: str) -> None:
         self._conan.remote_remove(remote_name)
 
-    def disable_remote(self, remote_name: str, disabled: bool):
+    def disable_remote(self, remote_name: str, disabled: bool) -> None:
         self._conan.remote_set_disabled_state(remote_name, disabled)
 
     def update_remote(
         self, remote_name: str, url: str, verify_ssl: bool, index: Optional[int] = None
-    ):
+    ) -> None:
         self._conan.remote_update(remote_name, url, verify_ssl, index)
 
-    def login_remote(self, remote_name: str, user_name: str, password: str):
+    def login_remote(self, remote_name: str, user_name: str, password: str) -> None:
         self._conan.authenticate(user_name, password, remote_name)
 
     ### Install related methods ###
@@ -369,9 +374,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         conan_ref: Union[ConanRef, str],
         conan_settings: Optional[ConanSettings] = None,
         conan_options: Optional[ConanOptions] = None,
-        profile="",
-        update=True,
-        generators: List[str] = [],
+        profile: str = "",
+        update: bool = True,
+        generators: Sequence[str] = [],
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         package_id = ""
@@ -382,9 +387,9 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         options_list = create_key_value_pair_list(conan_options)
         settings_list = create_key_value_pair_list(conan_settings)
         install_message = (
-            f"Installing '<b>{str(conan_ref)}</b>' with profile: {profile}, "
-            f"settings: {str(settings_list)}, "
-            f"options: {str(options_list)} and update={update}\n"
+            f"Installing '{conan_ref!s}' with profile: {profile}, "
+            f"settings: {settings_list!s}, "
+            f"options: {options_list!s} and update={update}\n"
         )
         self.logger.info(install_message)
         profile_names = None
@@ -415,10 +420,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 package_id = (
                     infos.get("installed", [{}])[0].get("packages", [{}])[0].get("id", "")
                 )
-            self.logger.info("Installation of '<b>%s</b>' finished", str(conan_ref))
+            self.logger.info("Installation of '%s' finished", str(conan_ref))
             return package_id, self.get_package_folder(conan_ref, package_id)
         except ConanException as error:
-            raise ConanException(f"Can't install reference {str(conan_ref)}': {str(error)}")
+            raise ConanException(f"Can't install reference {conan_ref}': {error!s}")
 
     def get_conan_buildinfo(
         self,
@@ -445,9 +450,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             content = generated_file.read_text()
         except Exception as e:
-            raise ConanException(
-                f"Can't read conanbuildinfo.txt for '<b>{str(conan_ref)}</b>': {str(e)}"
-            )
+            raise ConanException(f"Can't read conanbuildinfo.txt for '{conan_ref}': {e!s}")
         return content
 
     def get_options_with_default_values(
@@ -470,7 +473,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
     # Local References and Packages
 
-    def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = ""):
+    def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = "") -> None:
         pkg_ids = [pkg_id] if pkg_id else None
         self._conan.remove(str(conan_ref), packages=pkg_ids, force=True)
 
@@ -483,7 +486,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             response = self._conan.search_packages(self.generate_canonical_ref(conan_ref))
         except Exception as e:
-            raise ConanException(f"Error while getting local packages for recipe: {str(e)}")
+            raise ConanException(f"Error while getting local packages for recipe: {e!s}")
         if not response.get("error", True):
             try:
                 result = (
@@ -491,13 +494,13 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 )
             except Exception:
                 raise ConanException(
-                    f"Received invalid package response format for {str(conan_ref)}"
+                    f"Received invalid package response format for {conan_ref!s}"
                 )
         return result
 
     # Remote References and Packages
 
-    def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
+    def search_recipes_in_remotes(self, query: str, remote_name: str = "all") -> List[ConanRef]:
         result_recipes: List[ConanRef] = []
         remote_results = []
         try:
@@ -506,17 +509,15 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                 query, remote_name=remote_name, case_sensitive=False
             ).get("results", None)
         except Exception as e:
-            raise ConanException(f"Error while searching for recipe: {str(e)}")
+            raise ConanException(f"Error while searching for recipe: {e!s}")
         if not remote_results:
             return result_recipes
 
         for remote_search_res in remote_results:
-            result_recipes += list(
-                map(
-                    lambda item: ConanRef.loads(item.get("recipe", {}).get("id", "")),
-                    remote_search_res.get("items", []),
-                )
-            )
+            result_recipes += [
+                ConanRef.loads(item.get("recipe", {}).get("id", ""))
+                for item in remote_search_res.get("items", [])
+            ]
         result_recipes = list(set(result_recipes))  # make unique
         result_recipes.sort()
         self.info_cache.update_remote_package_list(result_recipes)
@@ -546,12 +547,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
 
         res_list: List[ConanRef] = []
         for remote_search_res in local_results + remote_results:
-            res_list += list(
-                map(
-                    lambda item: ConanRef.loads(item.get("recipe", {}).get("id", "")),
-                    remote_search_res.get("items", []),
-                )
-            )
+            res_list += [
+                ConanRef.loads(item.get("recipe", {}).get("id", ""))
+                for item in remote_search_res.get("items", [])
+            ]
         res_list = list(set(res_list))  # make unique
         res_list.sort()
         # update cache
@@ -559,7 +558,10 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         return res_list
 
     def get_remote_pkgs_from_ref(
-        self, conan_ref: Union[ConanRef, str], remote_name: Optional[str], query=None
+        self,
+        conan_ref: Union[ConanRef, str],
+        remote_name: Optional[str],
+        query: Optional[str] = None,
     ) -> List[ConanPkg]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
         found_pkgs: List[ConanPkg] = []

@@ -27,8 +27,12 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
     implemented here.
     """
 
-    def __init__(self, init=True, logger: Optional[logging.Logger] = None, mute_logging=False):
-        # no direct Conan API access! # TODO: sthink about this...
+    def __init__(
+        self,
+        init: bool = True,
+        logger: Optional[logging.Logger] = None,
+        mute_logging: bool = False,
+    ):
         self.info_cache: "ConanInfoCache"
 
         if logger is None:
@@ -40,16 +44,16 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         if init:
             self.init_api()
 
-    def mute_logging(self, mute_logging: bool):
+    def mute_logging(self, mute_logging: bool) -> None:
         self.logger.disabled = mute_logging
 
     ### Remotes related methods
 
-    def get_remote_names(self, include_disabled=False) -> List[str]:
+    def get_remote_names(self, include_disabled: bool = False) -> List[str]:
         return [remote.name for remote in self.get_remotes(include_disabled)]
 
     def get_remote(self, remote_name: str) -> Optional[Remote]:
-        for remote in self.get_remotes(True):
+        for remote in self.get_remotes(include_disabled=True):
             if remote.name == remote_name:
                 return remote
         return None
@@ -60,7 +64,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         self,
         conan_ref: Union[ConanRef, str],
         package: ConanPkg,
-        update=True,
+        update: bool = True,
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         from conans.errors import ConanException
@@ -83,14 +87,14 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 )
             return installed_id, package_path
         except ConanException as e:
-            Logger().error(f"Can't install package '<b>{str(conan_ref)}</b>': {str(e)}")
+            Logger().error(f"Can't install package '{conan_ref}': {str(e)}")
             return "", Path(INVALID_PATH_VALUE)
 
     def get_path_with_auto_install(
         self,
         conan_ref: Union[ConanRef, str],
         conan_options: Optional[ConanOptions] = None,
-        update=False,
+        update: bool = False,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """Return the pkg_id and package folder of a conan reference
         and auto-install it with the best matching package, if it is not available"""
@@ -99,7 +103,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             if pkg_id:
                 return pkg_id, path
             Logger().info(
-                f"'<b>{conan_ref}</b>' with options {repr(conan_options)} is not installed. Searching for packages to install..."
+                f"'{conan_ref}' with options {repr(conan_options)} is not installed. Searching for packages to install..."
             )
 
         pkg_id, path = self.install_best_matching_package(
@@ -111,7 +115,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         self,
         conan_ref: Union[ConanRef, str],
         conan_options: Optional[ConanOptions] = None,
-        update=False,
+        update: bool = False,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         packages, remote = self.find_best_matching_package_in_remotes(conan_ref, conan_options)
         if not packages:
@@ -135,11 +139,11 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 settings = packages[0].get("settings", {})
                 pkg_id = packages[0].get("id", "")
                 Logger().warning(
-                    f"Multiple matching packages found for '<b>{str(conan_ref)}</b>'!\n"
+                    f"Multiple matching packages found for '{conan_ref}'!\n"
                     f"Choosing this: {pkg_id} ({self.build_conan_profile_name_alias(settings)})"
                 )
             return packages[0]
-        Logger().debug(f"No matching local packages found for <b>{str(conan_ref)}</b>")
+        Logger().debug(f"No matching local packages found for {conan_ref}")
         return {"id": ""}
 
     def get_best_matching_local_package_path(
@@ -161,7 +165,9 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 return package
         return {"id": ""}
 
-    def get_local_pkg_from_path(self, conan_ref: Union[ConanRef, str], path: Path):
+    def get_local_pkg_from_path(
+        self, conan_ref: Union[ConanRef, str], path: Path
+    ) -> Optional[ConanPkg]:
         """For reverse lookup - give info from path"""
         found_package = None
         for package in self.get_local_pkgs_from_ref(conan_ref):
@@ -191,7 +197,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             if packages:
                 return (packages, remote.name)
         Logger().info(
-            f"Can't find a package '<b>{str(conan_ref)}</b>' with options {conan_options} in the <b>remotes</b>"
+            f"Can't find a package '{conan_ref}' with options {conan_options} in the remotes"
         )
         return ([], "")
 
@@ -260,9 +266,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
             if not found_pkgs:
                 return found_pkgs
         # get a set of existing options and reduce default options with them
-        min_opts_set = set(
-            map(lambda pkg: frozenset(tuple(pkg.get("options", {}).keys())), found_pkgs)
-        )
+        min_opts_set = {frozenset(tuple(pkg.get("options", {}).keys())) for pkg in found_pkgs}
         min_opts_list = frozenset()
         if min_opts_set:
             min_opts_list = min_opts_set.pop()
@@ -415,7 +419,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
         return remote_groups
 
     @staticmethod
-    def _convert_options_to_str_values(options: ConanOptions):
+    def _convert_options_to_str_values(options: ConanOptions) -> Dict[str, str]:
         for key, value in options.items():
             # convert "ANY" to ["ANY"]
             # this is done to ensure compatiblity between Conan 1 (accepts both) and 2 (accepts onyl list)
@@ -430,8 +434,9 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
     @staticmethod
     def _convert_options_to_native_ref_values(
-        options_to_convert: ConanOptions, ref_options: ConanOptions
-    ):
+        options_to_convert: ConanOptions,
+        ref_options: ConanOptions,
+    ) -> None:
         for key, value in options_to_convert.items():
             if str(value) not in ["True", "False", "0"] or key not in ref_options:
                 continue

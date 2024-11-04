@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conan-unified-api"
 authors = [{name = "Péter Gosztolya and Contributors"}]
-version = "0.1.0a2"
+version = "0.1.0b1"
 requires-python = ">=3.8"
 description = "Compatibility layer for Conan 1 and 2 for Python 3.8+"
 readme = "README.md"
@@ -32,7 +32,8 @@ issues = "https://github.com/goszpeti/conan_unified_api/issues"
 [project.optional-dependencies]
 dev = [
     "rope", # refactoring
-    ]
+]
+
 test = [
     "psutil==5.9.8",
     "pytest==8.2.2",
@@ -43,15 +44,30 @@ test = [
 
 [tool.ruff]
 line-length=96
-target-version = "py38"
 
 [tool.ruff.lint]
+pyupgrade.keep-runtime-typing=true
 select = [
-    "E",  # pycodestyle
-    "F",  # pyflakes
-    "LOG", # flake8-logging
-    "G", # lake8-logging-format
+  "ALL",
 ]
+ignore = ["ANN401", "ANN204",
+"FA100",
+"FBT001",
+"FBT002",
+"COM812", # trailing commas
+"C90", # complexity
+"EXE", # flake8-executable 
+"BLE", # flake8-blind-except
+"D", # pydocstyle
+"C90", # complexity
+"I", # Isort
+"ASYNC", # flake8-async.
+"PLR0912", # too many branches
+"PLR0913",
+"TRY003",
+# pydoclint (DOC)?
+]
+
 
 [tool.ruff.format]
 quote-style = "double"
