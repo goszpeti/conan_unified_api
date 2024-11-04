@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from typing_extensions import Self, TypeAlias
 
@@ -32,51 +32,57 @@ class ConanUnifiedApi:
     """
     API abstraction to provide compatibility between ConanV1 and V2 APIs.
     Thin wrapper:
-        If possible, the wrapper will just call the same named method in Conan and add type hints.
-        For ConanReferences it will always accept str and ConnReference Objects.
-        Return types are almost always objects for References and Packages, so that they can be used
-        directly in other functions of this API.
-    New convenience functions:
-        - ... TODO:
-    Paths as return values:
-        Paths will set an INVALID_PATH value instead of None if the Path can't be determined.
-        This is done, because usually there is always an exists check or something similar,
-        which then returns naturally False.
-        Otherwise can be checked against the "invalid_path" variable from the conan_unified_api namespace.
-    Type Hints:
-        The wrapper will alias most of the built-in types to the same name and add typedict hints.
-        Own implementations are only used to ensure a compatible behavior of conan basic classes
-        (like adding the loads method to ConanV2 References)
-    Version specific methods:
-        In case of a version specific function, the interface will still specify it and the other version(s)
-        will simply not do anything or return a default value.
-    Exception handling:
-        All methods can throw unless noted in the docs.
-        Often the wrapper method will raise a ConanException and reference the original error in it.
+      If possible, the wrapper will just call the same named method in Conan and add type hints.
+      For ConanReferences it will always accept str and ConnReference Objects.
+      Return types are almost always objects for References and Packages, so that they can be
+      used directly in other functions of this API.
 
+    Paths as return values:
+      Paths will set an INVALID_PATH value instead of None if the Path can't be determined.
+      This is done, because usually there is always an exists check or something similar,
+      which then returns naturally False.
+      Otherwise can be checked against the "invalid_path" variable from the conan_unified_api
+      namespace.
+    Type Hints:
+      The wrapper will alias most of the built-in types to the same name and add typedict hints.
+      Own implementations are only used to ensure a compatible behavior of conan basic classes
+      (like adding the loads method to ConanV2 References)
+    Version specific methods:
+      In case of a version specific function, the interface will still specify it and the other
+      version(s) will simply not do anything or return a default value.
+    Exception handling:
+      All methods can throw unless noted in the docs. Often the wrapper method will raise a
+      ConanException and reference the original error in it.
     """
 
     @abstractmethod
-    def __init__(self, init=True, logger: Optional[logging.Logger] = None, mute_logging=False):
+    def __init__(
+        self,
+        init: bool = True,
+        logger: Optional[logging.Logger] = None,
+        mute_logging: bool = False,
+    ):
         """
-        :param init: Calls init_api function directly in the constructor. Can be disabled for faster constructor.
-        :param logger: A custom logger can be injected here. Otherwise will use a default logger.
+        :param init: Calls init_api function directly in the constructor. Can be disabled for
+        faster constructor.
+        :param logger: A custom logger can be injected here. Otherwise will use default logger.
         :param mute_logging: Disables the logger, regardless if it was injected ot not.
         Can not raise an exception.
         """
-        self.info_cache: "ConanInfoCache"
+        self.info_cache: ConanInfoCache
         ...
 
     @abstractmethod
     def init_api(self) -> Self:
         """
         Instantiate the internal Conan api. Can be called extra to split up loading.
-        Conan 1 can slow down on init with remove locks noticably, if there are several hundred local packages.
+        Conan 1 can slow down on init with remove locks noticably, if there are several
+        hundred local packages.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def mute_logging(self, mute_logging: bool):
+    def mute_logging(self, mute_logging: bool) -> None:
         """
         Can be used to selectively turn on and off logging for methods.
         :param mute_logging: Disables the logger if set to True, enables it again with false
@@ -102,8 +108,8 @@ class ConanUnifiedApi:
     @abstractmethod
     def info(self, conan_ref: Union[ConanRef, str]) -> List[Dict[str, Any]]:
         """
-        Calls the conan info method on Conan V1 to return all recipe and pacakges metainfo (including paths.)
-        for the recipe itself and all the dependencies. The order is random.
+        Calls the conan info method on Conan V1 to return all recipe and pacakges metainfo
+        (including paths) for the recipe itself and all the dependencies. The order is random.
         For the ConanV2 version it calls graph info, which is the best equivalent method.
         Original remote argument ommitted. To download a conanfile from a specific remote
         please use inspect with remote argument.
@@ -114,25 +120,29 @@ class ConanUnifiedApi:
     def inspect(
         self,
         conan_ref: Union[ConanRef, str],
-        attributes: List[str] = [],
+        attributes: Sequence[str] = [],
         remote_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Get a field of the selected conanfile. Works currently only with a reference, but not with a path.
-        Recreates the ConanV1 behavior for ConanV2.
-        If attributes is empty in ConanV1 a chosen default fields are returned, in ConanV2 all of them.
-        If attributes is set, only the selected will be returned in the dict.
+        Get a field of the selected conanfile. Works currently only with a reference,
+        but not with a path. Recreates the ConanV1 behavior for ConanV2.
+        If attributes is empty in ConanV1 a chosen default fields are returned, in ConanV2 all
+        of them. If attributes is set, only the selected will be returned in the dict.
 
         """
         raise NotImplementedError
 
     @abstractmethod
-    def alias(self, conan_ref: Union[ConanRef, str], conan_target_ref: Union[ConanRef, str]):
+    def alias(
+        self,
+        conan_ref: Union[ConanRef, str],
+        conan_target_ref: Union[ConanRef, str],
+    ) -> None:
         """Creates an alias for the target ref with all local packages. For ConanV1 only."""
         raise NotImplementedError
 
     @abstractmethod
-    def remove_locks(self):
+    def remove_locks(self) -> None:
         """Remove local cache locks. For ConanV1 only."""
         raise NotImplementedError
 
@@ -217,12 +227,12 @@ class ConanUnifiedApi:
     ### Remotes ###
 
     @abstractmethod
-    def get_remotes(self, include_disabled=False) -> List[Remote]:
+    def get_remotes(self, include_disabled: bool = False) -> List[Remote]:
         """Return a list of all remotes as objects"""
         raise NotImplementedError
 
     @abstractmethod
-    def get_remote_names(self, include_disabled=False) -> List[str]:
+    def get_remote_names(self, include_disabled: bool = False) -> List[str]:
         """Return a list of all remote names"""
         raise NotImplementedError
 
@@ -232,24 +242,28 @@ class ConanUnifiedApi:
         raise NotImplementedError
 
     @abstractmethod
-    def add_remote(self, remote_name: str, url: str, verify_ssl: bool):
+    def add_remote(self, remote_name: str, url: str, verify_ssl: bool) -> None:
         """Add a new remote with the selected options. Disabled is always false."""
         raise NotImplementedError
 
     @abstractmethod
-    def rename_remote(self, remote_name: str, new_name: str):  # -> None:
+    def rename_remote(self, remote_name: str, new_name: str) -> None:
         """Rename a remote"""
         raise NotImplementedError
 
     @abstractmethod
-    def remove_remote(self, remote_name: str):
+    def remove_remote(self, remote_name: str) -> None:
         """Remove a remote"""
         raise NotImplementedError
 
     @abstractmethod
     def update_remote(
-        self, remote_name: str, url: str, verify_ssl: bool, index: Optional[int] = None
-    ):
+        self,
+        remote_name: str,
+        url: str,
+        verify_ssl: bool,
+        index: Optional[int] = None,
+    ) -> None:
         """Update a remote with new information and reorder with index.
         The Remote object is immutable, so we have to get every field separatly.
         The name can't be changed with this, only with rename.
@@ -257,14 +271,14 @@ class ConanUnifiedApi:
         raise NotImplementedError
 
     @abstractmethod
-    def disable_remote(self, remote_name: str, disabled: bool):
+    def disable_remote(self, remote_name: str, disabled: bool) -> None:
         """
         Setting disabled to true disables the remote, settings to false enables it.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def login_remote(self, remote_name: str, user_name: str, password: str):
+    def login_remote(self, remote_name: str, user_name: str, password: str) -> None:
         """Login to a remote with credentials
         This method will throw if wrong credentials are entered,
         so we can catch the first error, when logging into multiple remotes
@@ -285,9 +299,9 @@ class ConanUnifiedApi:
         conan_ref: Union[ConanRef, str],
         conan_settings: Optional[ConanSettings] = None,
         conan_options: Optional[ConanOptions] = None,
-        profile="",
-        update=True,
-        generators: List[str] = [],
+        profile: str = "",
+        update: bool = True,
+        generators: Sequence[str] = [],
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
@@ -302,7 +316,7 @@ class ConanUnifiedApi:
         self,
         conan_ref: Union[ConanRef, str],
         package: ConanPkg,
-        update=True,
+        update: bool = True,
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """
@@ -318,7 +332,7 @@ class ConanUnifiedApi:
         self,
         conan_ref: Union[ConanRef, str],
         conan_options: Optional[ConanOptions] = None,
-        update=False,
+        update: bool = False,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """Return the pkg_id and package folder of a conan reference
         and auto-install it with the best matching package, if it is not available"""
@@ -329,13 +343,15 @@ class ConanUnifiedApi:
         self,
         conan_ref: Union[ConanRef, str],
         conan_options: Optional[ConanOptions] = None,
-        update=False,
+        update: bool = False,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         raise NotImplementedError
 
     @abstractmethod
     def get_options_with_default_values(
-        self, conan_ref: Union[ConanRef, str], remote_name: Optional[str] = None
+        self,
+        conan_ref: Union[ConanRef, str],
+        remote_name: Optional[str] = None,
     ) -> Tuple[ConanAvailableOptions, ConanOptions]:
         """Return the available options and their default values as dict."""
         raise NotImplementedError
@@ -354,7 +370,9 @@ class ConanUnifiedApi:
 
     @abstractmethod
     def get_package_folder(
-        self, conan_ref: Union[ConanRef, str], package_id: str
+        self,
+        conan_ref: Union[ConanRef, str],
+        package_id: str,
     ) -> ConanPackagePath:
         "Get the fully resolved pkg path from the ref and the specific package (id)"
         raise NotImplementedError
@@ -372,20 +390,28 @@ class ConanUnifiedApi:
         raise NotImplementedError
 
     @abstractmethod
-    def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = ""):
+    def remove_reference(
+        self,
+        conan_ref: Union[ConanRef, str],
+        pkg_id: str = "",
+    ) -> None:
         """Remove a conan reference and it's package if specified via id"""
         raise NotImplementedError
 
     @abstractmethod
     def find_best_matching_local_package(
-        self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None
+        self,
+        conan_ref: Union[ConanRef, str],
+        conan_options: Optional[ConanOptions] = None,
     ) -> ConanPkg:
         """Find a package in the local cache"""
         raise NotImplementedError
 
     @abstractmethod
     def get_best_matching_local_package_path(
-        self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None
+        self,
+        conan_ref: Union[ConanRef, str],
+        conan_options: Optional[ConanOptions] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         """Return the pkg_id and pkg folder of a conan reference, if it is installed."""
         raise NotImplementedError
@@ -406,7 +432,11 @@ class ConanUnifiedApi:
         raise NotImplementedError
 
     @abstractmethod
-    def get_local_pkg_from_path(self, conan_ref: Union[ConanRef, str], path: Path):
+    def get_local_pkg_from_path(
+        self,
+        conan_ref: Union[ConanRef, str],
+        path: Path,
+    ) -> Optional[ConanPkg]:
         """For reverse lookup - give info from path"""
         raise NotImplementedError
 
@@ -452,7 +482,7 @@ class ConanUnifiedApi:
     ### Remote References and Packages ###
 
     @abstractmethod
-    def search_recipes_in_remotes(self, query: str, remote_name="all") -> List[ConanRef]:
+    def search_recipes_in_remotes(self, query: str, remote_name: str = "all") -> List[ConanRef]:
         """Search in all remotes for a specific query.
         Returns a list of unique and ordered ConanRefs.
         Limitation: Can't handle long canonical refs like mylib/1.0.0@_/_.
@@ -462,14 +492,18 @@ class ConanUnifiedApi:
 
     @abstractmethod
     def search_recipe_all_versions_in_remotes(
-        self, conan_ref: Union[ConanRef, str]
+        self,
+        conan_ref: Union[ConanRef, str],
     ) -> List[ConanRef]:
         """Search in all remotes for all versions of a conan ref"""
         raise NotImplementedError
 
     @abstractmethod
     def get_remote_pkgs_from_ref(
-        self, conan_ref: Union[ConanRef, str], remote_name: Optional[str], query=None
+        self,
+        conan_ref: Union[ConanRef, str],
+        remote_name: Optional[str],
+        query: Optional[str] = None,
     ) -> List[ConanPkg]:
         """
         Return all packages for a reference in a specific remote with an optional query.
@@ -484,7 +518,9 @@ class ConanUnifiedApi:
 
     @abstractmethod
     def find_best_matching_package_in_remotes(
-        self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None
+        self,
+        conan_ref: Union[ConanRef, str],
+        conan_options: Optional[ConanOptions] = None,
     ) -> Tuple[List[ConanPkg], RemoteName]:
         """Find a package with options in the remotes"""
         raise NotImplementedError
