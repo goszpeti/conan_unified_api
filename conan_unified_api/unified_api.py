@@ -28,7 +28,7 @@ RemoteName: TypeAlias = str
 # Interface and docs
 
 
-class ConanUnifiedApi:
+class ConanBaseUnifiedApi:
     """
     API abstraction to provide compatibility between ConanV1 and V2 APIs.
     Thin wrapper:

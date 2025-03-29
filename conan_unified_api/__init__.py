@@ -2,12 +2,14 @@
 Convenience access to all user related classes and factory for conan api.
 """
 
+import logging
 from importlib.metadata import distribution
 from pathlib import Path
+from typing import Optional
 
 from .base import conan_version, invalid_path
 from .cache.conan_cache import ConanInfoCache
-from .unified_api import ConanUnifiedApi
+from .common import ConanUnifiedApi
 
 PKG_NAME = "conan_unified_api"
 __version__ = distribution(PKG_NAME)
@@ -18,14 +20,23 @@ __version__ = distribution(PKG_NAME)
 base_path = Path(__file__).absolute().parent
 
 
-def ConanApiFactory() -> ConanUnifiedApi:  # noqa: N802
+def ConanApiFactory(
+    init: bool = True,
+    logger: Optional[logging.Logger] = None,
+    mute_logging: bool = False,
+) -> ConanUnifiedApi:  # noqa: N802
     """Instantiate ConanApi in the correct version"""
     if conan_version.major == 1:
         from conan_unified_api.conan_v1 import ConanApi
-
-        return ConanApi()
     if conan_version.major == 2:
         from .conan_v2 import ConanApi
 
-        return ConanApi()
+    return ConanApi(init, logger, mute_logging)
     raise RuntimeError("Can't recognize Conan version")
+
+
+__all__ = [
+    "ConanInfoCache",
+    "base_path",
+    "invalid_path",
+]

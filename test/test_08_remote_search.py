@@ -7,10 +7,10 @@ from test.conan_helper import conan_remove_ref
 
 from conan_unified_api import conan_version
 from conan_unified_api.types import ConanPkgRef, ConanRef
-from conan_unified_api.unified_api import ConanUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
 
 
-def test_info_simple(conan_api: ConanUnifiedApi):
+def test_info_simple(conan_api: ConanBaseUnifiedApi):
     # ref needs to be in a remote
     ref = ConanRef.loads(TEST_REF_OFFICIAL.split("@")[0])
     assert conan_api.get_conanfile_path(ref).exists()
@@ -23,7 +23,7 @@ def test_info_simple(conan_api: ConanUnifiedApi):
         assert info[0].get("name") == ref.name
 
 
-def test_info_transitive_reqs(conan_api: ConanUnifiedApi):
+def test_info_transitive_reqs(conan_api: ConanBaseUnifiedApi):
     info = conan_api.info(TEST_REF_NO_SETTINGS)
     assert len(info) == 2
 
@@ -36,7 +36,7 @@ def test_info_transitive_reqs(conan_api: ConanUnifiedApi):
        assert info[0].get("name") == ConanRef.loads(TEST_REF_NO_SETTINGS).name
        assert info[1].get("name") == ConanRef.loads(TEST_REF).name
 
-def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
+def test_conan_find_remote_pkg(conan_api: ConanBaseUnifiedApi):
     """
     Test, if search_package_in_remotes finds a package for the current system and the specified options.
     The function must find exactly one pacakge, which uses the spec. options and corresponds to the
@@ -61,7 +61,7 @@ def test_conan_find_remote_pkg(conan_api: ConanUnifiedApi):
             assert default_settings[setting] in pkg.get("settings", {})[setting]
 
 
-def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanUnifiedApi):
+def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanBaseUnifiedApi):
     """
     Test, if a wrong Option return causes an error.
     Empty list must be returned and the error be logged.
@@ -72,7 +72,7 @@ def test_conan_not_find_remote_pkg_wrong_opts(conan_api: ConanUnifiedApi):
     assert not pkg
 
 
-def test_search_for_all_packages(conan_api: ConanUnifiedApi):
+def test_search_for_all_packages(conan_api: ConanBaseUnifiedApi):
     """ Test, that an existing ref will be found in the remotes. """
     res = conan_api.search_recipe_all_versions_in_remotes(TEST_REF)
     assert len(res) >= 2
@@ -85,14 +85,14 @@ def test_search_for_all_packages(conan_api: ConanUnifiedApi):
                           (TEST_REF_OFFICIAL, "local", []),  # does not work
                           ("example*", "local", [test_ref_official_obj, test_ref_obj]),
                          ],)
-def test_search_recipes_in_remotes(conan_api: ConanUnifiedApi, query: str, remote: str,
+def test_search_recipes_in_remotes(conan_api: ConanBaseUnifiedApi, query: str, remote: str,
                                    expected: List["ConanRef"]):
     """ Test queries for conan search"""
     assert expected == conan_api.search_recipes_in_remotes(query, remote)
 
 
 @pytest.mark.parametrize("ref", [TEST_REF, TEST_REF_OFFICIAL],)
-def test_get_remote_pkg_from_id(conan_api: ConanUnifiedApi, ref: str):
+def test_get_remote_pkg_from_id(conan_api: ConanBaseUnifiedApi, ref: str):
     """ Test finding the ConanPkg from the ConanPkgRef """
     pkg, _ = conan_api.find_best_matching_package_in_remotes(ref)
     assert len(pkg) >= 1

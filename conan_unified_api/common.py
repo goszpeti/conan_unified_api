@@ -15,13 +15,13 @@ from .types import (
     ConanSettings,
     Remote,
 )
-from .unified_api import ConanUnifiedApi
+from .unified_api import ConanBaseUnifiedApi, RemoteName
 
 if TYPE_CHECKING:
     from conan_unified_api.cache.conan_cache import ConanInfoCache
 
 
-class ConanCommonUnifiedApi(ConanUnifiedApi):
+class ConanUnifiedApi(ConanBaseUnifiedApi):
     """
     High level functions, which use only other ConanUnifiedApi functions are
     implemented here.
@@ -190,7 +190,7 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
     def find_best_matching_package_in_remotes(
         self, conan_ref: Union[ConanRef, str], conan_options: Optional[ConanOptions] = None
-    ) -> Tuple[List[ConanPkg], str]:
+    ) -> Tuple[List[ConanPkg], RemoteName]:
         """Find a package with options in the remotes"""
         for remote in self.get_remotes():
             packages = self.find_best_matching_packages(conan_ref, conan_options, remote.name)
@@ -334,12 +334,12 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
                 default_options.update({default_option_str[0]: default_option_str[1]})
         else:
             default_options = default_options_raw
-        ConanCommonUnifiedApi._convert_options_to_str_values(default_options)
+        ConanUnifiedApi._convert_options_to_str_values(default_options)
         return default_options
 
     @staticmethod
     def generate_canonical_ref(conan_ref: Union[ConanRef, str]) -> str:
-        conan_ref = ConanCommonUnifiedApi.conan_ref_from_reflike(conan_ref)
+        conan_ref = ConanUnifiedApi.conan_ref_from_reflike(conan_ref)
         if conan_ref.user is None and conan_ref.channel is None:
             return str(conan_ref) + "@_/_"
         return str(conan_ref)
@@ -447,10 +447,6 @@ class ConanCommonUnifiedApi(ConanUnifiedApi):
 
     @staticmethod
     def _are_option_compatible(options_ref: ConanOptions, options_other: ConanOptions) -> bool:
-        options_ref_str = ConanCommonUnifiedApi._convert_options_to_str_values(
-            options_ref.copy()
-        )
-        options_other_str = ConanCommonUnifiedApi._convert_options_to_str_values(
-            options_other.copy()
-        )
+        options_ref_str = ConanUnifiedApi._convert_options_to_str_values(options_ref.copy())
+        options_other_str = ConanUnifiedApi._convert_options_to_str_values(options_other.copy())
         return options_ref_str.items() <= options_other_str.items()

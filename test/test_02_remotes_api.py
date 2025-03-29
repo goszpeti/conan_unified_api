@@ -1,7 +1,7 @@
 
 import pytest
 from pytest_check import check
-from conan_unified_api.unified_api import ConanUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
 from test.conan_helper import disable_remote, remove_remote, add_remote, TEST_REMOTE_NAME
 from test import TEST_REMOTE_URL, TEST_REMOTE_USER, time_function
 
@@ -22,7 +22,7 @@ def new_remote():
         remove_remote(remote)
 
 
-def test_add_remove_remotes(conan_api: ConanUnifiedApi):
+def test_add_remove_remotes(conan_api: ConanBaseUnifiedApi):
     """ Check that adding a new remote adds it with all used options.
     Afterwards delete it and check.
     """
@@ -46,7 +46,7 @@ def test_add_remove_remotes(conan_api: ConanUnifiedApi):
     assert len(conan_api.get_remotes()) == len(orig_remotes)
 
 
-def test_disable_remotes(conan_api: ConanUnifiedApi, new_remote):
+def test_disable_remotes(conan_api: ConanBaseUnifiedApi, new_remote):
     new_remote_name, _ = new_remote()
     remote = conan_api.get_remote(new_remote_name)
     assert remote
@@ -62,14 +62,14 @@ def test_disable_remotes(conan_api: ConanUnifiedApi, new_remote):
     assert remote
     assert not remote.disabled
 
-def test_get_remote_user_info(conan_api: ConanUnifiedApi):
+def test_get_remote_user_info(conan_api: ConanBaseUnifiedApi):
     """ Check that get_remote_user_info returns a tuple of name and login
       state for the test remote """
     info = conan_api.get_remote_user_info(TEST_REMOTE_NAME)
     assert info == (TEST_REMOTE_USER, True)
 
 
-def test_get_remotes(conan_api: ConanUnifiedApi, new_remote):
+def test_get_remotes(conan_api: ConanBaseUnifiedApi, new_remote):
     """ Test that get_remotes returns remote objects and cotains the test remote and 
     the new remote. Also check include_disabled flag.
     """
@@ -89,7 +89,7 @@ def test_get_remotes(conan_api: ConanUnifiedApi, new_remote):
     assert remotes[-1].name == new_remote_name
 
 
-def test_get_remotes_names(conan_api: ConanUnifiedApi, new_remote):
+def test_get_remotes_names(conan_api: ConanBaseUnifiedApi, new_remote):
     new_remote_name, _ = new_remote()
 
     disable_remote(new_remote_name)
@@ -103,14 +103,14 @@ def test_get_remotes_names(conan_api: ConanUnifiedApi, new_remote):
     assert new_remote_name in remote_names
 
 
-def test_get_remote(conan_api: ConanUnifiedApi):
+def test_get_remote(conan_api: ConanBaseUnifiedApi):
     remote = conan_api.get_remote(TEST_REMOTE_NAME)
     assert remote  # not None
     assert remote.name == TEST_REMOTE_NAME
     assert remote.url == TEST_REMOTE_URL
 
 
-def test_update_remotes(conan_api: ConanUnifiedApi, new_remote):
+def test_update_remotes(conan_api: ConanBaseUnifiedApi, new_remote):
     new_remote_name, _ = new_remote()
 
     conan_api.update_remote(new_remote_name, "http://localhost:9304", True)
@@ -126,7 +126,7 @@ def test_update_remotes(conan_api: ConanUnifiedApi, new_remote):
     assert remotes[0].name == new_remote_name
 
 
-def test_rename_remotes(conan_api: ConanUnifiedApi, new_remote):
+def test_rename_remotes(conan_api: ConanBaseUnifiedApi, new_remote):
     new_remote_name, _ = new_remote()
 
     renamed_name = "new_ng_last_final"
@@ -139,7 +139,7 @@ def test_rename_remotes(conan_api: ConanUnifiedApi, new_remote):
     remove_remote(renamed_name)
 
 
-def test_login_remote(conan_api: ConanUnifiedApi):
+def test_login_remote(conan_api: ConanBaseUnifiedApi):
     conan_api.login_remote(TEST_REMOTE_NAME, "demo", "demo")
 
     with pytest.raises(Exception) as excinfo:

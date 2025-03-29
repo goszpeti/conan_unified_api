@@ -7,7 +7,7 @@ from conan_unified_api.base import conan_version
 from conan_unified_api.base.helper import delete_path
 from conan_unified_api.base.logger import Logger
 
-from ..common import ConanCommonUnifiedApi
+from ..common import ConanUnifiedApi
 from ..types import ConanRef
 
 
@@ -88,7 +88,7 @@ class ConanInfoCache:
 
     def invalidate_remote_package(self, conan_ref: Union[ConanRef, str]):
         """Remove a package, wich was removed on the remote"""
-        conan_ref = ConanCommonUnifiedApi.conan_ref_from_reflike(conan_ref)
+        conan_ref = ConanUnifiedApi.conan_ref_from_reflike(conan_ref)
         version_channels = self._remote_packages.get(conan_ref.name, {}).get(
             str(conan_ref.user), []
         )
