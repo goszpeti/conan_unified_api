@@ -99,12 +99,13 @@ jobs:
         run: >-
           python script/execute_tests.py --conan_major_version=${{ matrix.conan }}
       - name: Upload Test results
-        uses: actions/upload-artifact@v3 # TODO: v4 does not support overwrite anymore
+        uses: actions/upload-artifact@v4
         with:
           name: Test results
           path: |
             cov/
             results/
+          overwrite: true
 
   sonarcloud:
     if: always() # execute, even when tests fail
