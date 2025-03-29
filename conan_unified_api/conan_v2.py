@@ -12,7 +12,7 @@ from .base import INVALID_PATH_VALUE, Version, conan_version
 from .base.helper import create_key_value_pair_list
 from .base.logger import Logger
 from .base.typing import SignatureCheckMeta
-from .common import ConanCommonUnifiedApi
+from .common import ConanUnifiedApi
 from .types import (
     ConanAvailableOptions,
     ConanException,
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 # FIXME: Many commands spam the log...
 
 
-class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
+class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
     """Wrapper around ConanAPIV2"""
 
     def __init__(
@@ -313,7 +313,11 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
         self, remote_name: str, url: str, verify_ssl: bool, index: Optional[int] = None
     ) -> None:
         self._conan.remotes.update(
-            remote_name, url, verify_ssl, self._conan.remotes.get(remote_name).disabled, index
+            remote_name,
+            url,
+            verify_ssl,
+            self._conan.remotes.get(remote_name).disabled,
+            index,
         )
 
     def login_remote(self, remote_name: str, user_name: str, password: str) -> None:
@@ -369,7 +373,11 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             print_graph_basic(deps_graph)
             deps_graph.report_graph_error()
             self._conan.graph.analyze_binaries(
-                deps_graph, build_mode=None, remotes=remotes, update=update, lockfile=None
+                deps_graph,
+                build_mode=None,
+                remotes=remotes,
+                update=update,
+                lockfile=None,
             )
             print_graph_packages(deps_graph)
 
@@ -541,7 +549,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
             try:
                 conan_ref_latest: ConanRef = self._conan.list.latest_recipe_revision(conan_ref)
             except Exception as e:
-                raise ConanException(
+                Logger().error(
                     f"Error while getting latest recipe for {str(conan_ref)}: {str(e)}"
                 )
                 return result
@@ -646,8 +654,7 @@ class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
                             )
                         )
             Logger().debug(str(found_pkgs))
-        except ConanException as e:  # no problem, next
-            raise ConanException(
-                f"Can not get Conan packages for reference {conan_ref}: {str(e)}"
-            )
+        except ConanException as e:
+            error_message = f"Can not get Conan packages for reference {conan_ref}: {e!s}"
+            Logger().error(str(error_message))
         return found_pkgs

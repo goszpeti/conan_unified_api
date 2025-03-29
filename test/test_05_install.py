@@ -5,10 +5,10 @@ from test.conan_helper import conan_remove_ref
 
 from conan_unified_api import conan_version
 from conan_unified_api.types import ConanRef
-from conan_unified_api.unified_api import ConanUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
 
 
-def test_get_path_or_install(conan_api: ConanUnifiedApi):
+def test_get_path_or_install(conan_api: ConanBaseUnifiedApi):
     """
     Test, if get_package installs the package and returns the path and check it again.
     The bin dir in the package must exist (indicating it was correctly downloaded)
@@ -24,7 +24,7 @@ def test_get_path_or_install(conan_api: ConanUnifiedApi):
     assert (package_folder / dir_to_check).is_dir()
 
 
-def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
+def test_get_path_or_install_manual_options(conan_api: ConanBaseUnifiedApi):
     """
     Test, if a package with options can install.
     The actual installaton must not return an error and non given options be merged with default options.
@@ -39,7 +39,7 @@ def test_get_path_or_install_manual_options(conan_api: ConanUnifiedApi):
         assert (package_folder / "bin" / "python").is_file()
 
 
-def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
+def test_install_with_any_settings(mocker, capfd, conan_api: ConanBaseUnifiedApi):
     """
     Test, if a package with <setting>=Any flags can install
     The actual installaton must not return an error.
@@ -57,7 +57,7 @@ def test_install_with_any_settings(mocker, capfd, conan_api: ConanUnifiedApi):
     assert "ERROR" not in captured.err
     assert "Cannot install package" not in captured.err
 
-def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
+def test_install_compiler_no_settings(conan_api: ConanBaseUnifiedApi, capfd):
     """
     Test, if a package with no settings at all can install
     The actual installaton must not return an error.
@@ -77,7 +77,7 @@ def test_install_compiler_no_settings(conan_api: ConanUnifiedApi, capfd):
 
 
 
-def test_conan_get_conan_buildinfo(conan_api: ConanUnifiedApi):
+def test_conan_get_conan_buildinfo(conan_api: ConanBaseUnifiedApi):
     """
     Check, that get_conan_buildinfo actually retrieves as a string for the linux pkg 
     This exectues an install under the hood, thus the category

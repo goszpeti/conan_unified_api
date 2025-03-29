@@ -6,22 +6,22 @@ from pathlib import Path
 
 from conan_unified_api import conan_version
 from conan_unified_api.base.helper import str2bool
-from conan_unified_api.unified_api import ConanUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
 
 
-def test_get_settings_file_path(conan_api: ConanUnifiedApi):
+def test_get_settings_file_path(conan_api: ConanBaseUnifiedApi):
     settings_path = conan_api.get_settings_file_path()
     assert settings_path.name == "settings.yml"
     assert settings_path.is_file()
 
 
-def test_get_config_file_path(conan_api: ConanUnifiedApi):
+def test_get_config_file_path(conan_api: ConanBaseUnifiedApi):
     config_path = conan_api.get_config_file_path()
     assert config_path.suffix == ".conf"
     assert config_path.is_file()
 
 
-def test_get_config_entry(conan_api: ConanUnifiedApi):
+def test_get_config_entry(conan_api: ConanBaseUnifiedApi):
     if conan_version.major == 1:
         config_entry_name = "general.non_interactive" # set by fixture
     else:
@@ -48,25 +48,25 @@ def test_get_config_entry(conan_api: ConanUnifiedApi):
         assert entry_value == True # want to know if really True and not some truthy value
 
 
-def test_get_revisions_enabled(conan_api: ConanUnifiedApi):
+def test_get_revisions_enabled(conan_api: ConanBaseUnifiedApi):
     entry_value = conan_api.get_revisions_enabled()
     assert entry_value is not None
     assert entry_value
 
 
-def test_get_user_home_path(conan_api: ConanUnifiedApi):
+def test_get_user_home_path(conan_api: ConanBaseUnifiedApi):
     path = conan_api.get_user_home_path()
     assert path.is_dir()
     assert (path / "settings.yml").exists() # ok for both Conan 1 and 2
 
 
-def test_get_storage_path(conan_api: ConanUnifiedApi):
+def test_get_storage_path(conan_api: ConanBaseUnifiedApi):
     path = conan_api.get_storage_path()
     assert path.is_dir()
     # TODO: Extend test a little bit...
 
 
-def test_conan_short_path_root(conan_api: ConanUnifiedApi):
+def test_conan_short_path_root(conan_api: ConanBaseUnifiedApi):
     """ Test, that short path root can be read. """
     if conan_version.major == 2:
         return

@@ -6,7 +6,7 @@ from test import TEST_REF
 from pytest_check import check
 
 from conan_unified_api import conan_version
-from conan_unified_api.unified_api import ConanUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
 from test.conan_helper import add_editable, remove_editable
 
 TEST_EDITABLE_REF = "example/9.9.9@local/editable"
@@ -40,7 +40,7 @@ def new_editable():
         remove_editable(ref)
 
 
-def test_get_editable(conan_api: ConanUnifiedApi, editable_path, new_editable):
+def test_get_editable(conan_api: ConanBaseUnifiedApi, editable_path, new_editable):
     broken_editable = conan_api.get_editable(TEST_REF)
     with check:
      assert broken_editable is None
@@ -52,13 +52,13 @@ def test_get_editable(conan_api: ConanUnifiedApi, editable_path, new_editable):
     assert editable.path == str(editable_path)
 
 
-def test_get_editables_package_path(conan_api: ConanUnifiedApi, editable_path, new_editable):
+def test_get_editables_package_path(conan_api: ConanBaseUnifiedApi, editable_path, new_editable):
     new_editable(TEST_EDITABLE_REF, editable_path)
 
     assert conan_api.get_editables_package_path(TEST_EDITABLE_REF) == editable_path
 
 
-def test_get_editables_output_folder(conan_api: ConanUnifiedApi, editable_path, 
+def test_get_editables_output_folder(conan_api: ConanBaseUnifiedApi, editable_path, 
                                      new_editable, repo_paths):
     new_editable(TEST_EDITABLE_REF, editable_path, repo_paths.testdata_path)
 
@@ -66,7 +66,7 @@ def test_get_editables_output_folder(conan_api: ConanUnifiedApi, editable_path,
         TEST_EDITABLE_REF) == repo_paths.testdata_path
 
 
-def test_get_editable_references(conan_api: ConanUnifiedApi, new_editable, editable_path):
+def test_get_editable_references(conan_api: ConanBaseUnifiedApi, new_editable, editable_path):
     new_editable(TEST_EDITABLE_REF, editable_path)
     new_editable(TEST_EDITABLE_REF + "_2", editable_path)
 
@@ -75,7 +75,7 @@ def test_get_editable_references(conan_api: ConanUnifiedApi, new_editable, edita
     assert ConanRef.loads(TEST_EDITABLE_REF + "_2") in refs
 
 
-def test_add_remove_editable(conan_api: ConanUnifiedApi, editable_path, repo_paths):
+def test_add_remove_editable(conan_api: ConanBaseUnifiedApi, editable_path, repo_paths):
     os.system(f"conan editable remove {TEST_EDITABLE_REF}")
 
     conan_api.add_editable(TEST_EDITABLE_REF, editable_path, repo_paths.testdata_path)

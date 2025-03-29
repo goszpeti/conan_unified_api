@@ -6,7 +6,7 @@ from test.conan_helper import conan_install_ref, conan_remove_ref, get_profiles
 from conan_unified_api.types import ConanPkgRef, ConanRef
 from conan_unified_api import conan_version
 from conan_unified_api import ConanUnifiedApi
-from conan_unified_api.common import ConanCommonUnifiedApi
+from conan_unified_api.common import ConanUnifiedApi
 
 def test_inspect(conan_api: ConanUnifiedApi):
     inspect = conan_api.inspect(TEST_REF)
@@ -78,7 +78,7 @@ def test_get_local_pkg_from_path(conan_api: ConanUnifiedApi):
     pass
 
 
-def test_get_options_with_default_values(conan_api: ConanCommonUnifiedApi):
+def test_get_options_with_default_values(conan_api: ConanUnifiedApi):
     available_options, default_options = conan_api.get_options_with_default_values(test_ref_obj)
     assert conan_api._are_option_compatible(available_options, {'shared': [
         'True', 'False'], 'fPIC2': ['True', 'False'], 'variant': ['ANY']})

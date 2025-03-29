@@ -17,7 +17,7 @@ try:
 except ImportError:
     from contextlib_chdir import chdir  # type: ignore
 
-from .common import ConanCommonUnifiedApi
+from .common import ConanUnifiedApi
 from .types import (
     ConanAvailableOptions,
     ConanException,
@@ -43,7 +43,7 @@ from conan_unified_api.base import CONAN_LOG_PREFIX, INVALID_PATH_VALUE, invalid
 current_path = Path(__file__).parent
 
 
-class ConanApi(ConanCommonUnifiedApi, metaclass=SignatureCheckMeta):
+class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
     """Wrapper around ConanAPIV1"""
 
     def __init__(

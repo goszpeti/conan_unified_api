@@ -4,8 +4,8 @@ from pathlib import Path
 
 
 from conan_unified_api.base.helper import (create_key_value_pair_list, delete_path)
-from conan_unified_api.unified_api import ConanUnifiedApi
-from conan_unified_api.common import ConanCommonUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
+from conan_unified_api.common import ConanUnifiedApi
 from test import TEST_REF_OFFICIAL
 
 
@@ -48,12 +48,12 @@ def test_create_key_value_list():
     res = create_key_value_pair_list(inp)
     assert res == ["Key1=Value1"]
 
-def test_generate_canonical_ref(conan_api: ConanUnifiedApi):
+def test_generate_canonical_ref(conan_api: ConanBaseUnifiedApi):
     ref = conan_api.generate_canonical_ref(TEST_REF_OFFICIAL.split("@")[0])
     assert ref == TEST_REF_OFFICIAL
 
 
-def test_resolve_default_options(conan_api: ConanCommonUnifiedApi):
+def test_resolve_default_options(conan_api: ConanUnifiedApi):
     """
     Test, if different kind of types of default options can be converted to a dict
     Dict is expected.
