@@ -101,7 +101,7 @@ jobs:
       - name: Upload Test results
         uses: actions/upload-artifact@v4
         with:
-          name: Test results ${{ matrix.conan }}
+          name: Test results ${{ matrix.name }}
           path: |
             cov/
             results/
@@ -134,5 +134,5 @@ jobs:
             -Dsonar.tests=./test
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.python.version=3.8,3.9,3.10,3.11,3.12
-            -Dsonar.python.coverage.reportPaths=cov/cov-*.xml
-            -Dsonar.python.xunit.reportPath=results/result-unit-*.xml
+            -Dsonar.python.coverage.reportPaths=./**/cov/cov-*.xml
+            -Dsonar.python.xunit.reportPath=./**/results/result-unit-*.xml
