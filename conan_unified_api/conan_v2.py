@@ -499,8 +499,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         path: Union[Path, str],
         output_folder: Union[Path, str],
     ) -> bool:
-        conan_ref = self.conan_ref_from_reflike(conan_ref)
         try:
+            conan_ref = self.conan_ref_from_reflike(conan_ref)
             self._conan.local.editable_add(
                 str(path),
                 conan_ref.name,
@@ -510,16 +510,17 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                 output_folder=str(output_folder),
             )
         except Exception as e:
-            raise ConanException("Error adding editable: " + str(e))
+            self.logger.error("Error adding editable: %s", str(e))
+            return False
         return True
 
     def remove_editable(self, conan_ref: Union[ConanRef, str]) -> bool:
         try:
-            if isinstance(conan_ref, str):
-                conan_ref = ConanRef.loads(conan_ref)
+            conan_ref = self.conan_ref_from_reflike(conan_ref)
             self._conan.local.editable_remove(None, [str(conan_ref)])
         except Exception as e:
-            raise ConanException("Error removing editable: " + str(e))
+            self.logger.error("Error removing editable: %s", str(e))
+            return False
         return True
 
     def remove_reference(self, conan_ref: Union[ConanRef, str], pkg_id: str = "") -> None:
