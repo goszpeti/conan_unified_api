@@ -8,12 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union
 
-from conans.errors import ConanException  # noqa: F401
 from typing_extensions import TypeAlias
 
 from conan_unified_api import conan_version
 
 if conan_version.major == 1:
+    from conans.errors import ConanException  # noqa: F401
     from conans.model.ref import ConanFileReference, PackageReference
     from conans.paths.package_layouts.package_editable_layout import (
         PackageEditableLayout,  # noqa: F401
@@ -24,6 +24,11 @@ if conan_version.major == 1:
 else:
     from conans.model.package_ref import PkgReference
     from conans.model.recipe_ref import RecipeReference as ConanFileRef
+
+    try:
+        from conan.errors import ConanException  # noqa: F401
+    except ImportError:  # until conan version 2.?
+        from conans.errors import ConanException  # noqa: F401
 
     class PackageReference(PkgReference):
         """Compatibility class for changed package_id attribute"""

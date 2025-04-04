@@ -281,7 +281,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
 
     # Remotes
 
-    def get_remotes(self, include_disabled=False) -> List[Remote]:
+    def get_remotes(self, include_disabled: bool = False) -> List[Remote]:
         remotes = []
         try:
             remotes = self._conan.remotes.list(None, only_enabled=not include_disabled)
@@ -336,7 +336,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         conan_options: Optional[ConanOptions] = None,
         profile: str = "",
         update: bool = True,
-        generators: List[str] = [],
+        generators: Sequence[str] = [],
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
