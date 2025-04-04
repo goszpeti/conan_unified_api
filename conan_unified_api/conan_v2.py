@@ -119,7 +119,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
     def inspect(
         self,
         conan_ref: Union[ConanRef, str],
-        attributes: Sequence[str] = [],
+        attributes: Sequence[str] = (),
         remote_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
@@ -145,9 +145,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         for attr in dir(conanfile):
             if attr.startswith("_"):  # only public fields
                 continue
-            if attributes:
-                if attr not in attributes:
-                    continue
+            if attributes and attr not in attributes:
+                continue
             try:
                 result[attr] = getattr(conanfile, attr)
             except Exception:
@@ -336,7 +335,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         conan_options: Optional[ConanOptions] = None,
         profile: str = "",
         update: bool = True,
-        generators: Sequence[str] = [],
+        generators: Sequence[str] = (),
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
