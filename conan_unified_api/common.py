@@ -6,6 +6,7 @@ from .base import INVALID_PATH_VALUE, conan_version
 from .base.helper import str2bool
 from .base.logger import Logger
 from .types import (
+    ConanException,
     ConanOptions,
     ConanPackageId,
     ConanPackagePath,
@@ -67,8 +68,6 @@ class ConanUnifiedApi(ConanBaseUnifiedApi):
         update: bool = True,
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
-        from conans.errors import ConanException
-
         package_id = package.get("id", "")
         options = package.get("options", {})
         settings = package.get("settings", {})
