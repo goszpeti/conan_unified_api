@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conan-unified-api"
 authors = [{name = "Péter Gosztolya and Contributors"}]
-version = "2.7.0b1" # version corresponds to the last supported conan version
+version = "2.7.0b2" # version corresponds to the last supported conan version
 requires-python = ">=3.8"
 description = "Compatibility layer for Conan 1 and 2 for Python 3.8+"
 readme = "README.md"
@@ -22,8 +22,9 @@ dependencies = [
     "packaging",  # use the built-in, or get latest if there is some issue with pip
 ]
 
-[tool.setuptools]
-packages = ["conan_unified_api"]
+[tool.setuptools.packages.find]
+include = ["conan_unified_api*"]  # package names should match these glob patterns (["*"] by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
 [project.urls]
 repository = "https://github.com/goszpeti/conan_unified_api.git"
