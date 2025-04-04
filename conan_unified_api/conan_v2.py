@@ -36,8 +36,6 @@ if TYPE_CHECKING:
 
     from .cache.conan_cache import ConanInfoCache
 
-# FIXME: Many commands spam the log...
-
 
 class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
     """Wrapper around ConanAPIV2"""
@@ -48,11 +46,11 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         logger: Optional[logging.Logger] = None,
         mute_logging: bool = False,
     ):
-        self.info_cache: "ConanInfoCache"
-        self._conan: "ConanAPI"
-        self._client_cache: "ClientCache"
+        self.info_cache: ConanInfoCache
+        self._conan: ConanAPI
+        self._client_cache: ClientCache
         self._short_path_root = Path("Unknown")
-        self._home_paths: "HomePaths"
+        self._home_paths: HomePaths
         super().__init__(init, logger, mute_logging)
 
     def init_api(self) -> Self:
@@ -62,7 +60,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         with redirect_stdout(devnull), redirect_stderr(devnull):
             self._conan = ConanAPI()
             self._init_client_cache()
-
+        devnull.close()
         from .cache.conan_cache import ConanInfoCache
 
         self.info_cache = ConanInfoCache(current_path, self.get_all_local_refs())
@@ -111,7 +109,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                     continue
                 try:
                     result_dict[attr] = getattr(node, attr)
-                except Exception:
+                except Exception:  # almost anything can go wrong here, ignore
                     continue
             results.append(result_dict)
         return results
@@ -183,9 +181,10 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
 
         try:
             profile = ProfileLoader(self._conan.cache_folder).load_profile(profile_name)
-            return profile.settings
         except Exception as e:
-            raise ConanException(f"Can't get profile {profile_name} settings: {str(e)}")
+            msg = f"Can't get profile {profile_name} settings: {e!s}"
+            raise ConanException(msg) from e
+        return profile.settings
 
     def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path ortherwise
@@ -196,7 +195,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             latest_rev_pkg = self._conan.list.latest_package_revision(
                 ConanPkgRef(latest_rev_ref, package_id)
             )
-            layout = self._client_cache.pkg_layout(latest_rev_pkg)
+            layout = self._client_cache.pkg_layout(latest_rev_pkg)  # type: ignore
             return Path(layout.package())
         except Exception:  # gotta catch 'em all!
             return Path(INVALID_PATH_VALUE)
@@ -224,13 +223,13 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                         self._conan.download.recipe(latest_rev, remote)  # type: ignore
                         break
             path = self._conan.local.get_conanfile_path(
-                self._conan.cache.export_path(conan_ref), os.getcwd(), py=True
+                self._conan.cache.export_path(conan_ref), str(Path.cwd()), py=True
             )
             if not path:
                 return Path(INVALID_PATH_VALUE)
             return Path(path)
         except Exception as e:
-            Logger().error(f"Can't get conanfile: {str(e)}")
+            Logger().error(f"Can't get conanfile: {e!s}")
         return Path(INVALID_PATH_VALUE)
 
     def get_default_settings(self) -> ConanSettings:
@@ -250,7 +249,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             info = self._conan.remotes.user_info(self._conan.remotes.get(remote_name))
         except Exception as e:
-            raise ConanException(f"Can't get remote {remote_name} user info: {str(e)}")
+            msg = f"Can't get remote {remote_name} user info: {e!s}"
+            raise ConanException(msg) from e
         return str(info.get("user_name", "")), info.get("authenticated", False)
 
     def get_config_file_path(self) -> Path:
@@ -285,7 +285,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             remotes = self._conan.remotes.list(None, only_enabled=not include_disabled)
         except Exception as e:
-            raise ConanException(f"Error while reading remotes: {str(e)}")
+            msg = f"Error while reading remotes: {e!s}"
+            raise ConanException(msg) from e
         return remotes  # type: ignore
 
     def add_remote(self, remote_name: str, url: str, verify_ssl: bool) -> None:
@@ -347,9 +348,9 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         options_list = create_key_value_pair_list(conan_options)
         settings_list = create_key_value_pair_list(conan_settings)
         install_message = (
-            f"Installing '{str(conan_ref)}' with profile: {profile}, "
-            f"settings: {str(settings_list)}, "
-            f"options: {str(options_list)} and update={update}\n"
+            f"Installing '{conan_ref!s}' with profile: {profile}, "
+            f"settings: {settings_list!s}, "
+            f"options: {options_list!s} and update={update}\n"
         )
         Logger().info(install_message)
         from conan.cli.printers.graph import print_graph_basic, print_graph_packages
@@ -400,18 +401,22 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
 
                 patched_tersize.stop()
 
+            devnull.close()
+
             info = None
             for node in deps_graph.nodes:
                 if node.ref == conan_ref:
                     info = node
                     break
             if info is None:
-                raise ConanException("Can't read information of installed recipe from graph.")
+                msg = "Can't read information of installed recipe from graph."
+                raise ConanException(msg)
             pkg_id = info.package_id
-            Logger().info(f"Installation of '{str(conan_ref)}' finished")
+            Logger().info(f"Installation of '{conan_ref!s}' finished")
             return (pkg_id, self.get_package_folder(conan_ref, pkg_id))
-        except ConanException as error:
-            raise ConanException(f"Can't install reference '{str(conan_ref)}': {str(error)}")
+        except ConanException as e:
+            msg = f"Can't install reference '{conan_ref!s}': {e!s}"
+            raise ConanException(msg) from e
 
     def get_options_with_default_values(
         self, conan_ref: Union[ConanRef, str], remote_name: Optional[str] = None
@@ -436,9 +441,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             default_options = self._resolve_default_options(default_options)
             available_options = conanfile.options.possible_values
         except Exception as e:  # silent error - if we have no options don't spam the user
-            Logger().debug(
-                f"Error while getting default options for {str(conan_ref)}: {str(e)}"
-            )
+            Logger().debug(f"Error while getting default options for {conan_ref!s}: {e!s}")
         return available_options, default_options
 
     ### Local References and Packages ###
@@ -535,7 +538,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
     def get_all_local_refs(self) -> List[ConanRef]:
         if conan_version < Version("2.6"):
             return self._client_cache.all_refs()
-        return self._client_cache._db.list_references()
+        return self._client_cache._db.list_references()  # noqa: SLF001
 
     def get_local_pkgs_from_ref(self, conan_ref: Union[ConanRef, str]) -> List[ConanPkg]:
         conan_ref = self.conan_ref_from_reflike(conan_ref)
@@ -549,9 +552,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             try:
                 conan_ref_latest: ConanRef = self._conan.list.latest_recipe_revision(conan_ref)
             except Exception as e:
-                Logger().error(
-                    f"Error while getting latest recipe for {str(conan_ref)}: {str(e)}"
-                )
+                Logger().error(f"Error while getting latest recipe for {conan_ref!s}: {e!s}")
                 return result
             if not conan_ref_latest:
                 return result
@@ -560,9 +561,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         try:  # errors with invalid pkg
             refs = self._conan.list.packages_configurations(conan_ref_latest)
         except Exception as e:
-            Logger().error(
-                f"Error while getting packages for recipe {str(conan_ref)}: {str(e)}"
-            )
+            Logger().error(f"Error while getting packages for recipe {conan_ref!s}: {e!s}")
             return result
         for ref, pkg_info in refs.items():
             pkg = ConanPkg()
@@ -584,17 +583,16 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         else:
             remotes = [self.get_remote(remote_name)]
             if not remotes:
-                raise ConanException(
-                    f"Error while searching for recipe: remote {remote_name} does not exist"
-                )
+                msg = f"Error while searching for recipe: remote {remote_name} does not exist"
+                raise ConanException(msg)
         for remote in remotes:
             try:
                 # no query possible with pattern
-                search_results: List["ConanRef"] = self._conan.search.recipes(
+                search_results: List[ConanRef] = self._conan.search.recipes(
                     query, remote=remote
                 )
             except Exception as e:
-                raise ConanException(f"Error while searching for recipe: {str(e)}")
+                Logger().error(f"Error while searching for recipe: {e!s}")
 
         search_results = list(set(search_results))  # make unique
         search_results.sort()

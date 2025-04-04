@@ -6,9 +6,8 @@ from typing import Dict, List, Optional, Set, Union
 from conan_unified_api.base import conan_version
 from conan_unified_api.base.helper import delete_path
 from conan_unified_api.base.logger import Logger
-
-from ..common import ConanUnifiedApi
-from ..types import ConanRef
+from conan_unified_api.common import ConanUnifiedApi
+from conan_unified_api.types import ConanRef
 
 
 class ConanInfoCache:
@@ -39,7 +38,9 @@ class ConanInfoCache:
         self._load()
 
     def get_similar_remote_pkg_refs(self, name: str, user: str) -> List[ConanRef]:
-        """Return cached info on remotely available conan refs from the same ref name and user."""
+        """
+        Return cached info on remotely available conan refs from the same ref name and user.
+        """
         if not user:  # official pkgs have no user, substituted by _
             user = "_"
         refs: List[ConanRef] = []
@@ -86,7 +87,7 @@ class ConanInfoCache:
                 remote_refs.add(str(ref))
             return remote_refs
 
-    def invalidate_remote_package(self, conan_ref: Union[ConanRef, str]):
+    def invalidate_remote_package(self, conan_ref: Union[ConanRef, str]) -> None:
         """Remove a package, wich was removed on the remote"""
         conan_ref = ConanUnifiedApi.conan_ref_from_reflike(conan_ref)
         version_channels = self._remote_packages.get(conan_ref.name, {}).get(
@@ -94,11 +95,13 @@ class ConanInfoCache:
         )
         invalid_version_channel = f"{conan_ref.version}/{conan_ref.channel}"
         if invalid_version_channel in version_channels:
-            Logger().debug(f"Invalidated {str(conan_ref)} from remote cache.")
+            Logger().debug(f"Invalidated {conan_ref!s} from remote cache.")
             version_channels.remove(f"{conan_ref.version}/{conan_ref.channel}")
             self._save()
 
-    def update_remote_package_list(self, remote_packages: List[ConanRef], invalidate=False):
+    def update_remote_package_list(
+        self, remote_packages: List[ConanRef], invalidate: bool = False
+    ) -> None:
         """
         Update the cache with the info of several remote packages.
         Invalidate option clears the cache.
@@ -127,11 +130,11 @@ class ConanInfoCache:
 
             self._save()
 
-    def _load(self):
+    def _load(self) -> None:
         """Load the cache."""
         json_data = {}
         try:
-            with open(self._cache_file, "r") as json_file:
+            with open(self._cache_file) as json_file:
                 content = json_file.read()
                 if len(content) > 0:
                     json_data = json.loads(content)
@@ -144,7 +147,7 @@ class ConanInfoCache:
         self._remote_packages = json_data.get("remote_packages", {})
         self._read_only = json_data.get("read_only", False)
 
-    def _save(self):
+    def _save(self) -> None:
         """Write the cache to file."""
         if self._read_only:
             return
