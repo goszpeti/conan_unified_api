@@ -12,7 +12,7 @@ from .cache.conan_cache import ConanInfoCache
 from .common import ConanUnifiedApi
 
 PKG_NAME = "conan_unified_api"
-__version__ = distribution(PKG_NAME)
+__version__ = distribution(PKG_NAME).version
 
 # Paths to find folders - points to the folder of this file
 # must be initialized later, otherwise setup.py can't parse this file
@@ -28,11 +28,12 @@ def ConanApiFactory(
     """Instantiate ConanApi in the correct version"""
     if conan_version.major == 1:
         from conan_unified_api.conan_v1 import ConanApi
-    if conan_version.major == 2:
+    elif conan_version.major == 2:
         from .conan_v2 import ConanApi
+    else:
+        raise RuntimeError("Can't recognize Conan version")
 
     return ConanApi(init, logger, mute_logging)
-    raise RuntimeError("Can't recognize Conan version")
 
 
 __all__ = [

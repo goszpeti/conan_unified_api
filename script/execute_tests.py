@@ -13,19 +13,18 @@ parser.add_argument("--conan_major_version", type=str, default="1")
 
 args = parser.parse_args()
 conan_major = args.conan_major_version
+# read in version number from pyproject.toml
+import conan_unified_api
 
+conan_unified_api.__version__
+
+versions_2 = ["==2.0.14"]
+minor_version_max = int(conan_unified_api.__version__.split(".")[1])
+for minor in range(1, minor_version_max + 1):
+    versions_2.append(f"~=2.{minor}.0")
 test_versions = {
     "1": ["==1.48.0", "==1.59.0", "<2"],
-    "2": [
-        "==2.0.14",
-        "~=2.1.0",
-        "~=2.2.0",
-        "~=2.3.0",
-        "~=2.4.0",
-        "~=2.5.0",
-        "~=2.6.0",
-        "~=2.7.0",
-    ],
+    "2": versions_2,
 }
 
 # compatbility
