@@ -34,7 +34,7 @@ class ConanUnifiedApi(ConanBaseUnifiedApi):
         logger: Optional[logging.Logger] = None,
         mute_logging: bool = False,
     ):
-        self.info_cache: "ConanInfoCache"
+        self.info_cache: ConanInfoCache
 
         if logger is None:
             self.logger = Logger()
@@ -81,13 +81,14 @@ class ConanUnifiedApi(ConanBaseUnifiedApi):
             )
             if installed_id != package_id:
                 Logger().warning(
-                    f"Installed {installed_id} instead of selected {package_id}."
-                    "This can happen, if there transitive settings changed in comparison to the build time."
+                    f"Installed {installed_id} instead of selected {package_id}. This can "
+                    "happen, if there transitive settings changed in comparison to build time."
                 )
-            return installed_id, package_path
         except ConanException as e:
-            Logger().error(f"Can't install package '{conan_ref}': {str(e)}")
-            return "", Path(INVALID_PATH_VALUE)
+            Logger().error(f"Can't install package '{conan_ref}': {e!s}")
+            installed_id = ""
+            package_path = Path(INVALID_PATH_VALUE)
+        return installed_id, package_path
 
     def get_path_with_auto_install(
         self,
@@ -102,7 +103,8 @@ class ConanUnifiedApi(ConanBaseUnifiedApi):
             if pkg_id:
                 return pkg_id, path
             Logger().info(
-                f"'{conan_ref}' with options {repr(conan_options)} is not installed. Searching for packages to install..."
+                f"'{conan_ref}' with options {conan_options!r} is not installed. "
+                "Searching for packages to install..."
             )
 
         pkg_id, path = self.install_best_matching_package(
@@ -419,9 +421,9 @@ class ConanUnifiedApi(ConanBaseUnifiedApi):
 
     @staticmethod
     def _convert_options_to_str_values(options: ConanOptions) -> Dict[str, str]:
+        """Convert "ANY" to ["ANY"]: This is done to ensure compatiblity between
+        Conan 1 (accepts both) and 2 (accepts only list)"""
         for key, value in options.items():
-            # convert "ANY" to ["ANY"]
-            # this is done to ensure compatiblity between Conan 1 (accepts both) and 2 (accepts onyl list)
             if value == "ANY":
                 options[key] = ["ANY"]
                 continue

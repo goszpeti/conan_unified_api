@@ -151,7 +151,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                     own_info = info
                     break
             if not own_info:
-                raise ConanException("Can't find own reference in info list!")
+                msg = "Can't find own reference in info list!"
+                raise ConanException(msg)
             infos.remove(own_info)
             infos.insert(0, own_info)
             return infos
@@ -304,8 +305,9 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             short_home = os.path.join(drive, os.sep, ".conan")
         else:
             short_home = str(short_home)
-        os.makedirs(short_home, exist_ok=True)
-        return Path(short_home)
+        short_home_path = Path(short_home)
+        Path.mkdir(short_home_path, exist_ok=True)
+        return short_home_path
 
     def get_package_folder(self, conan_ref: Union[ConanRef, str], package_id: str) -> Path:
         if not package_id:  # will give the base path otherwise
@@ -331,7 +333,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             if layout:
                 return Path(layout.conanfile())
         except Exception as e:
-            raise ConanException(f"Can't get conanfile: {e!s}")
+            msg = f"Can't get conanfile: {e!s}"
+            raise ConanException(msg) from e
         return invalid_path
 
     # Remotes
@@ -344,7 +347,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             else:
                 remotes = self._client_cache.registry.load_remotes().values()
         except Exception as e:
-            raise ConanException(f"Error while reading remotes file: {e!s}")
+            msg = f"Error while reading remotes file: {e!s}"
+            raise ConanException(msg) from e
         return remotes  # type: ignore
 
     def add_remote(self, remote_name: str, url: str, verify_ssl: bool) -> None:
@@ -422,8 +426,9 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                 )
             self.logger.info("Installation of '%s' finished", str(conan_ref))
             return package_id, self.get_package_folder(conan_ref, package_id)
-        except ConanException as error:
-            raise ConanException(f"Can't install reference {conan_ref}': {error!s}")
+        except ConanException as e:
+            msg = f"Can't install reference {conan_ref}': {e!s}"
+            raise ConanException(msg) from e
 
     def get_conan_buildinfo(
         self,
@@ -450,7 +455,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             content = generated_file.read_text()
         except Exception as e:
-            raise ConanException(f"Can't read conanbuildinfo.txt for '{conan_ref}': {e!s}")
+            msg = f"Can't read conanbuildinfo.txt for '{conan_ref}': {e!s}"
+            raise ConanException(msg) from e
         return content
 
     def get_options_with_default_values(
@@ -486,16 +492,16 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         try:
             response = self._conan.search_packages(self.generate_canonical_ref(conan_ref))
         except Exception as e:
-            raise ConanException(f"Error while getting local packages for recipe: {e!s}")
+            msg = f"Error while getting local packages for recipe: {e!s}"
+            raise ConanException(msg) from e
         if not response.get("error", True):
             try:
                 result = (
                     response.get("results", [{}])[0].get("items", [{}])[0].get("packages", [{}])
                 )
-            except Exception:
-                raise ConanException(
-                    f"Received invalid package response format for {conan_ref!s}"
-                )
+            except Exception as e:
+                msg = f"Received invalid package response format for {conan_ref!s}"
+                raise ConanException(msg) from e
         return result
 
     # Remote References and Packages
@@ -509,7 +515,8 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                 query, remote_name=remote_name, case_sensitive=False
             ).get("results", None)
         except Exception as e:
-            raise ConanException(f"Error while searching for recipe: {e!s}")
+            msg = f"Error while searching for recipe: {e!s}"
+            raise ConanException(msg) from e
         if not remote_results:
             return result_recipes
 

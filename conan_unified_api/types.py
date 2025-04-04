@@ -26,7 +26,7 @@ else:
     from conans.model.recipe_ref import RecipeReference as ConanFileRef
 
     try:
-        from conan.errors import ConanException  # noqa: F401
+        from conan.errors import ConanException
     except ImportError:  # until conan version 2.?
         from conans.errors import ConanException  # noqa: F401
 
