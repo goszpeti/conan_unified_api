@@ -159,7 +159,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
     def inspect(
         self,
         conan_ref: Union[ConanRef, str],
-        attributes: Sequence[str] = [],
+        attributes: Sequence[str] = (),
         remote_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         with save_sys_path():  # can change path or run arbitrary code and thus break things
@@ -376,7 +376,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         conan_options: Optional[ConanOptions] = None,
         profile: str = "",
         update: bool = True,
-        generators: Sequence[str] = [],
+        generators: Sequence[str] = (),
         remote_name: Optional[str] = None,
     ) -> Tuple[ConanPackageId, ConanPackagePath]:
         package_id = ""
