@@ -20,18 +20,19 @@ __version__ = distribution(PKG_NAME).version
 base_path = Path(__file__).absolute().parent
 
 
-def ConanApiFactory(
+def ConanApiFactory(  # noqa: N802
     init: bool = True,
     logger: Optional[logging.Logger] = None,
     mute_logging: bool = False,
-) -> ConanUnifiedApi:  # noqa: N802
+) -> ConanUnifiedApi:
     """Instantiate ConanApi in the correct version"""
     if conan_version.major == 1:
         from conan_unified_api.conan_v1 import ConanApi
     elif conan_version.major == 2:
         from .conan_v2 import ConanApi
     else:
-        raise RuntimeError("Can't recognize Conan version")
+        msg = "Can't recognize Conan version"
+        raise RuntimeError(msg)
 
     return ConanApi(init, logger, mute_logging)
 

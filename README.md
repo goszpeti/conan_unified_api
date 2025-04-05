@@ -1,4 +1,4 @@
-# conan_unified_api
+# Conan Unified API
 Compatibility layer for Conan 1 and 2 for Python.
 
 ![https://pypi.org/project/conan-unified_api/](https://img.shields.io/pypi/v/conan-unified_api?logo=pypi)
@@ -18,6 +18,12 @@ Compatibility layer for Conan 1 and 2 for Python.
 * Editable handling
 * Remotes handling
 
+## Installation
+
+    pip install conan_unified_api
+
+See https://pypi.org/project/conan-unified-api/ for other versions.
+
 ## Test matrix
 
 Tested Conan 1 versions: 1.48, 1.59.0 and latest
@@ -28,3 +34,8 @@ Tested Conan 2 versions: all minor versions until latest
  **u20**        | conan1  |conan1   |conan1&2  |conan1    |          
  **u22**        |         |         |          |          |conan1&2
  **win**        |         |         |          |conan1    |conan2
+
+
+## Static code analysis
+
+See [SonarQube](https://sonarcloud.io/summary/new_code?id=goszpeti_conan_unified_api&branch=main) for static code analysis results.

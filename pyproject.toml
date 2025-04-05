@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conan-unified-api"
 authors = [{name = "Péter Gosztolya and Contributors"}]
-version = "2.7.0" # version corresponds to the last supported conan version
+version = "2.15.0b1" # version corresponds to the last supported conan version
 requires-python = ">=3.8"
 description = "Compatibility layer for Conan 1 and 2 for Python 3.8+"
 readme = "README.md"
@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython"]
 dependencies = [
-    "conan>=1.48, <2.8",
+    "conan>=1.48, <2.16",
     # compatibility
     'contextlib-chdir==1.0.2; python_version<"3.11"',  # BSD License (BSD-3-Clause)
     'typing-extensions>=3.10.0.2, <5',  # Python Software Foundation License(PSF)
@@ -66,6 +66,7 @@ ignore = ["ANN401", "ANN204",
 "PLR0912", # too many branches
 "PLR0913",
 "TRY003",
+"S112", # logging on try-continue
 # pydoclint (DOC)?
 ]
 
