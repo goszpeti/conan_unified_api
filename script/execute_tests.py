@@ -13,11 +13,13 @@ parser.add_argument("--conan_major_version", type=str, default="1")
 
 args = parser.parse_args()
 conan_major = args.conan_major_version
+
+os.system("pip install setuptools wheel tomli")
 # read in version number from pyproject.toml
-import tomllib
+import tomli
 
 versions_2 = ["==2.0.14"]  # only supported version for conan 2.0.X
-pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+pyproject = tomli.loads(Path("pyproject.toml").read_text())
 minor_version_max = int(pyproject["project"]["version"].split(".")[1])
 
 deps = pyproject["project"]["dependencies"]
@@ -34,7 +36,6 @@ test_versions = {
 }
 
 # compatbility
-os.system("pip install setuptools wheel")
 ci_name = platform.system() + "_Py" + "_".join(map(str, sys.version_info[0:2]))
 for conan_version in test_versions[conan_major]:
     subprocess.run(
