@@ -14,12 +14,18 @@ parser.add_argument("--conan_major_version", type=str, default="1")
 args = parser.parse_args()
 conan_major = args.conan_major_version
 # read in version number from pyproject.toml
-import conan_unified_api
+import tomllib
 
-conan_unified_api.__version__
+versions_2 = ["==2.0.14"]  # only supported version for conan 2.0.X
+pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+minor_version_max = int(pyproject["project"]["version"].split(".")[1])
 
-versions_2 = ["==2.0.14"]
-minor_version_max = int(conan_unified_api.__version__.split(".")[1])
+deps = pyproject["project"]["dependencies"]
+for dep in deps:
+    if dep.startswith("conan"):
+        if int(dep.split("<")[1].split(".")[1]) - 1 != minor_version_max:
+            raise Exception("Minor version of project is not conan version")
+
 for minor in range(1, minor_version_max + 1):
     versions_2.append(f"~=2.{minor}.0")
 test_versions = {
