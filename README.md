@@ -11,6 +11,10 @@ Compatibility layer for Conan 1 and 2 for Python.
 * 1.X: from 1.48 to latest
 * 2.X from 2.0.14 to 2.7
 
+# Supported Python versions
+
+* All version from Python 3.8
+
 ## Supported APIs
 
 * Local package handling and path queries
@@ -31,8 +35,7 @@ Tested Conan 2 versions: all minor versions until latest
 
  **Python/OS.** | **3.8** | **3.9** | **3.10** | **3.11** | **3.12** 
 ----------------|---------|---------|----------|----------|----------
- **u20**        | conan1  |conan1   |conan1&2  |conan1    |          
- **u22**        |         |         |          |          |conan1&2
+ **u22**        | conan1  |conan1   |conan1&2  |conan1    |conan1&2
  **win**        |         |         |          |conan1    |conan2
 
 
