@@ -72,9 +72,12 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             from conans.client.cache.cache import ClientCache
         else:
             from conan.internal.cache.cache import PkgCache as ClientCache
-        self._client_cache = ClientCache(
-            self._conan.cache_folder, self._conan.config.global_conf
-        )
+
+            if conan_version < Version("2.20"):
+                global_conf = self._conan.config.global_conf
+            else:
+                global_conf = self._conan._api_helpers.global_conf
+            self._client_cache = ClientCache(self._conan.cache_folder, global_conf)
         from conan.internal.cache.home_paths import HomePaths
 
         self._home_paths = HomePaths(self._conan.cache_folder)
@@ -195,8 +198,11 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             latest_rev_pkg = self._conan.list.latest_package_revision(
                 ConanPkgRef(latest_rev_ref, package_id)
             )
-            layout = self._client_cache.pkg_layout(latest_rev_pkg)  # type: ignore
-            return Path(layout.package())
+            if conan_version < Version("2.20.0"):  # TODO: find smallest version
+                layout = self._client_cache.pkg_layout(latest_rev_pkg)  # type: ignore
+                return Path(layout.package())
+            return Path(self._conan.cache.package_path(latest_rev_pkg))
+
         except Exception:  # gotta catch 'em all!
             return Path(INVALID_PATH_VALUE)
 
@@ -366,9 +372,9 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             )
             requires = [conan_ref]
             if conan_version > Version("2.0"):
-                update = "*" if update else ""
+                update_str = "*" if update else ""
             deps_graph = self._conan.graph.load_graph_requires(
-                requires, None, profile_host, profile_host, None, remotes, update
+                requires, None, profile_host, profile_host, None, remotes, update_str
             )
             print_graph_basic(deps_graph)
             deps_graph.report_graph_error()
@@ -376,7 +382,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                 deps_graph,
                 build_mode=None,
                 remotes=remotes,
-                update=update,
+                update=update_str,
                 lockfile=None,
             )
             print_graph_packages(deps_graph)
@@ -559,7 +565,10 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         else:
             conan_ref_latest = conan_ref
         try:  # errors with invalid pkg
-            refs = self._conan.list.packages_configurations(conan_ref_latest)
+            if conan_version < Version("2.20"):
+                refs = self._conan.list.packages_configurations(conan_ref_latest)
+            else:
+                refs = self._conan.list._packages_configurations(conan_ref_latest)
         except Exception as e:
             Logger().error(f"Error while getting packages for recipe {conan_ref!s}: {e!s}")
             return result
@@ -588,9 +597,16 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         for remote in remotes:
             try:
                 # no query possible with pattern
-                search_results: List[ConanRef] = self._conan.search.recipes(
-                    query, remote=remote
-                )
+                if conan_version < Version("2.20"):
+                    search_results: List[ConanRef] = self._conan.search.recipes(
+                        query, remote=remote
+                    )
+                else:
+                    from conan.api.model import ListPattern
+
+                    raw_results = self._conan.list.select(ListPattern(query), remote=remote)
+                    # cast every result to ConanRef
+                    search_results = [ConanRef.loads(ref) for ref in raw_results.recipes.keys()]
             except Exception as e:
                 Logger().error(f"Error while searching for recipe: {e!s}")
 

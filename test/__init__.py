@@ -1,4 +1,4 @@
-""" 
+"""
 Test order is important for performance and error tracing.
 The basic tests have no dependencies to available test data to the server.
 Also when tested the conan_cli class functions will be swapped out for faster
@@ -8,14 +8,14 @@ multiple times.
 
 """
 
+import os
 from contextlib import contextmanager
 from datetime import datetime
-import os
 from pathlib import Path
+
 from conan_unified_api import ConanApiFactory
 from conan_unified_api.base.helper import str2bool
 from conan_unified_api.types import ConanRef
-
 
 ###### Global singleton test object ######
 """
@@ -33,8 +33,7 @@ TEST_REF_OFFICIAL = "example/1.0.0@_/_"
 test_ref_official_obj = ConanRef.loads(TEST_REF_OFFICIAL)
 TEST_REF_NO_SETTINGS = "nocompsettings/1.0.0@local/no_sets"
 INVALID_TEST_REF = "invalid/notexist@local/testing"
-SKIP_CREATE_CONAN_TEST_DATA = str2bool(
-    os.getenv("SKIP_CREATE_CONAN_TEST_DATA", "False"))
+SKIP_CREATE_CONAN_TEST_DATA = str2bool(os.getenv("SKIP_CREATE_CONAN_TEST_DATA", "False"))
 TEST_REMOTE_NAME = "local"
 TEST_REMOTE_URL = "http://127.0.0.1:9300/"
 TEST_REMOTE_USER = "demo"
@@ -50,14 +49,14 @@ def time_function(name: str):
 
 
 def is_ci_job():
-    """ Test runs in CI environment """
+    """Test runs in CI environment"""
     if os.getenv("GITHUB_WORKSPACE"):
         return True
     return False
 
 
-class PathSetup():
-    """ Get the important paths form the source repo. """
+class PathSetup:
+    """Get the important paths form the source repo."""
 
     def __init__(self):
         self.test_path = Path(os.path.dirname(__file__))

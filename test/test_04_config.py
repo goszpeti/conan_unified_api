@@ -1,4 +1,3 @@
-
 import os
 import platform
 import tempfile
@@ -23,9 +22,9 @@ def test_get_config_file_path(conan_api: ConanBaseUnifiedApi):
 
 def test_get_config_entry(conan_api: ConanBaseUnifiedApi):
     if conan_version.major == 1:
-        config_entry_name = "general.non_interactive" # set by fixture
+        config_entry_name = "general.non_interactive"  # set by fixture
     else:
-        # no adding config api yet, so hack it 
+        # no adding config api yet, so hack it
         config = conan_api.get_config_file_path().read_text()
         # remove commented out lines
         configs = {}
@@ -38,14 +37,14 @@ def test_get_config_entry(conan_api: ConanBaseUnifiedApi):
         if config_entry_name not in configs:
             config += f"\n{config_entry_name}=True\n"
             conan_api.get_config_file_path().write_text(config)
-    conan_api.init_api() # reads config only on init
+    conan_api.init_api()  # reads config only on init
     entry_value = conan_api.get_config_entry(config_entry_name)
     assert entry_value is not None
 
     if conan_version.major == 1:
         assert str2bool(entry_value)
     else:
-        assert entry_value == True # want to know if really True and not some truthy value
+        assert entry_value == True  # want to know if really True and not some truthy value
 
 
 def test_get_revisions_enabled(conan_api: ConanBaseUnifiedApi):
@@ -57,7 +56,7 @@ def test_get_revisions_enabled(conan_api: ConanBaseUnifiedApi):
 def test_get_user_home_path(conan_api: ConanBaseUnifiedApi):
     path = conan_api.get_user_home_path()
     assert path.is_dir()
-    assert (path / "settings.yml").exists() # ok for both Conan 1 and 2
+    assert (path / "settings.yml").exists()  # ok for both Conan 1 and 2
 
 
 def test_get_storage_path(conan_api: ConanBaseUnifiedApi):
@@ -67,7 +66,7 @@ def test_get_storage_path(conan_api: ConanBaseUnifiedApi):
 
 
 def test_conan_short_path_root(conan_api: ConanBaseUnifiedApi):
-    """ Test, that short path root can be read. """
+    """Test, that short path root can be read."""
     if conan_version.major == 2:
         return
     new_short_home = Path(tempfile.gettempdir()) / "._myconan_short"

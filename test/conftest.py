@@ -1,39 +1,47 @@
 import configparser
 import ctypes
-from datetime import datetime, timedelta
 import os
 import platform
 import shutil
 import subprocess
 import sys
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
 from threading import Thread
 from typing import Generator
+
 import psutil
 import pytest
-from conan_unified_api import base_path, ConanInfoCache, ConanApiFactory
-from conan_unified_api import conan_version
-from . import (SKIP_CREATE_CONAN_TEST_DATA, TEST_REF, TEST_REF_NO_SETTINGS, TEST_REF_OFFICIAL,
-                  TEST_REMOTE_NAME, TEST_REMOTE_URL, PathSetup, is_ci_job)
-from .conan_helper import (add_remote, clean_remotes_on_ci, conan_create,
-                               conan_upload, get_profiles, login_test_remote)
-from . import conan_helper
+
+from conan_unified_api import ConanApiFactory, ConanInfoCache, base_path, conan_version
+
+from . import (
+    SKIP_CREATE_CONAN_TEST_DATA,
+    TEST_REF,
+    TEST_REF_NO_SETTINGS,
+    TEST_REF_OFFICIAL,
+    TEST_REMOTE_NAME,
+    TEST_REMOTE_URL,
+    PathSetup,
+    conan_helper,
+)
+from .conan_helper import (
+    add_remote,
+    clean_remotes_on_ci,
+    conan_create,
+    conan_upload,
+    get_profiles,
+    login_test_remote,
+)
+
 exe_ext = ".exe" if platform.system() == "Windows" else ""
 conan_server_thread = None
 
 
-# conan = ConanApiFactory()
-# conan.init_api()
-# for i in range(9, 1000):
-#     print(f"Copying index {i}")
-#     conan.alias(f"example/9.9.{i}@local/alias", TEST_REF)
-#     # os.system(f"conan alias example/9.9.{i}@local/alias {TEST_REF}")
-
-
 def pytest_report_teststatus(report, config):
-    if report.when == 'call':
+    if report.when == "call":
         if report.head_line == "test_add_remove_remotes" and report.outcome == "passed":
             conan_helper.TESTED_ADD_REMOVE_REMOTE = True
         if report.head_line == "test_disable_remotes" and report.outcome == "passed":
@@ -100,7 +108,12 @@ def check_if_process_running(process_name, kill=False, cmd_narg=1, timeout_s=10)
                         except:
                             process.kill()
                     return True
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, IndexError):
+            except (
+                psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess,
+                IndexError,
+            ):
                 pass
         print(f"Not found process {process_name}, keep looking...")
         if timeout_s == 0:
@@ -111,6 +124,7 @@ def check_if_process_running(process_name, kill=False, cmd_narg=1, timeout_s=10)
 
 def run_conan_server():
     subprocess.run("conan_server")
+
 
 def start_conan_server():
     # Setup Server config
@@ -124,7 +138,7 @@ def start_conan_server():
     if "write_permissions" not in cp:
         cp.add_section("write_permissions")
     cp["write_permissions"]["*/*@*/*"] = "*"
-    with config_path.open('w', encoding="utf8") as fd:
+    with config_path.open("w", encoding="utf8") as fd:
         cp.write(fd)
 
     # Setup default profile
@@ -133,8 +147,10 @@ def start_conan_server():
     if conan_version.major == 1:
         conan = ConanApiFactory()
         os.makedirs(str(conan.get_profiles_path()), exist_ok=True)
-        shutil.copy(str(profiles_path / platform.system().lower()),
-                    conan.get_profiles_path() / "default")
+        shutil.copy(
+            str(profiles_path / platform.system().lower()),
+            conan.get_profiles_path() / "default",
+        )
     elif conan_version.major == 2:
         os.system("conan profile detect")
 
@@ -142,8 +158,7 @@ def start_conan_server():
     if platform.system() == "Windows":
         # check if firewall was set
         try:
-            check_output(
-                "netsh advfirewall firewall show rule conan_server").decode("cp850")
+            check_output("netsh advfirewall firewall show rule conan_server").decode("cp850")
         except CalledProcessError:
             # allow server port for private connections
             args = f'advfirewall firewall add rule name="conan_server" program="{sys.executable}" dir= in action=allow protocol=TCP localport=9300'
@@ -153,8 +168,7 @@ def start_conan_server():
     # Start Server
     global conan_server_thread
     if not conan_server_thread:
-        conan_server_thread = Thread(
-            name="ConanServer", daemon=True, target=run_conan_server)
+        conan_server_thread = Thread(name="ConanServer", daemon=True, target=run_conan_server)
         conan_server_thread.start()
         time.sleep(3)
     print("ADDING CONAN REMOTE")
@@ -169,14 +183,14 @@ def start_conan_server():
 
 
 def create_test_data(paths):
-    """ Create test data """
+    """Create test data"""
     if SKIP_CREATE_CONAN_TEST_DATA:
         return
     print("CREATING TESTDATA FOR LOCAL CONAN SERVER")
     profiles_path = paths.testdata_path / "conan" / "profile"
 
     args = []
-    for arg in ["-o shared=True", "-o shared=False"]: 
+    for arg in ["-o shared=True", "-o shared=False"]:
         for profile in get_profiles():
             profile_path = profiles_path / profile
             args.append(f"-pr {str(profile_path)} {arg}")
@@ -184,16 +198,14 @@ def create_test_data(paths):
     create_test_ref(TEST_REF, paths, args)
     create_test_ref(TEST_REF_OFFICIAL, paths, args)
 
-
     # create no settings pkgs
     if conan_version.major == 1:
-        conanfile_path = str(paths.testdata_path / "conan" /
-                                "conanfile_no_settings.py")
+        conanfile_path = str(paths.testdata_path / "conan" / "conanfile_no_settings.py")
     else:
-        conanfile_path = str(paths.testdata_path / "conan" /
-                                "conanfile_no_settingsV2.py")
-    conan_create(conanfile_path,  TEST_REF_NO_SETTINGS)
+        conanfile_path = str(paths.testdata_path / "conan" / "conanfile_no_settingsV2.py")
+    conan_create(conanfile_path, TEST_REF_NO_SETTINGS)
     conan_upload(TEST_REF_NO_SETTINGS)
+
 
 def create_test_ref(ref, paths, create_params=[""]):
     if conan_version.major == 2:

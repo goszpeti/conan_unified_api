@@ -41,7 +41,7 @@ for conan_version in test_versions[conan_major]:
     subprocess.run(
         ["pip", "install", f"conan{conan_version}", "--use-pep517", "--no-build-isolation"],
         check=True,
-    )  # "--no_build_isolation"
+    )
     if conan_major == "2":
         os.system(f"pip install conan_server{conan_version} --use-pep517")
     conan_version_stripped = conan_version.strip("==").strip("~=")
@@ -49,6 +49,8 @@ for conan_version in test_versions[conan_major]:
         conan_version_stripped = str(int(conan_version_stripped.strip("<")) - 1) + "-latest"
     subprocess.run(
         [
+            sys.executable,
+            "-m",
             "pytest",
             "-v",
             "test",

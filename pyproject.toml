@@ -68,6 +68,8 @@ ignore = ["ANN401", "ANN204",
 "TRY003",
 "S112", # logging on try-continue
 # pydoclint (DOC)?
+"PLC0415", # import not at top
+"SLF001" # access to private members
 ]
 
 
