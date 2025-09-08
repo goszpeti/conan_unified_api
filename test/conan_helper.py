@@ -168,5 +168,3 @@ def remove_editable(ref):
         os.system(f"conan editable remove {ref}")
     else:
         os.system(f"conan editable remove -r {ref}")
-    else:
-        os.system(f"conan editable remove -r {ref}")
