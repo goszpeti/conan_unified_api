@@ -32,7 +32,8 @@ def test_get_path_or_install_manual_options(conan_api: ConanBaseUnifiedApi):
     # This package has an option "shared" and is fairly small.
     conan_remove_ref(TEST_REF)
     id, package_folder = conan_api.get_path_with_auto_install(
-        ConanRef.loads(TEST_REF), {"shared": "True"})
+        ConanRef.loads(TEST_REF), {"shared": "True"}
+    )
     if platform.system() == "Windows":
         assert (package_folder / "bin" / "python.exe").is_file()
     elif platform.system() == "Linux":
@@ -49,13 +50,22 @@ def test_install_with_any_settings(mocker, capfd, conan_api: ConanBaseUnifiedApi
     # mock the remote response
     conan_remove_ref(TEST_REF)
     # Create the "any" package
-    assert conan_api.install_package(ConanRef.loads(TEST_REF), {
-        'id': '325c44fdb228c32b3de52146f3e3ff8d94dddb60', 'options': {},
-        'settings': {'arch_build': 'any', 'os_build': 'Linux', "build_type": "ANY"},
-        'requires': [], 'outdated': False}, False, TEST_REMOTE_NAME)
+    assert conan_api.install_package(
+        ConanRef.loads(TEST_REF),
+        {
+            "id": "325c44fdb228c32b3de52146f3e3ff8d94dddb60",
+            "options": {},
+            "settings": {"arch_build": "any", "os_build": "Linux", "build_type": "ANY"},
+            "requires": [],
+            "outdated": False,
+        },
+        False,
+        TEST_REMOTE_NAME,
+    )
     captured = capfd.readouterr()
     assert "ERROR" not in captured.err
     assert "Cannot install package" not in captured.err
+
 
 def test_install_compiler_no_settings(conan_api: ConanBaseUnifiedApi, capfd):
     """
@@ -66,7 +76,7 @@ def test_install_compiler_no_settings(conan_api: ConanBaseUnifiedApi, capfd):
         return
     ref = TEST_REF_NO_SETTINGS
     conan_remove_ref(ref)
-    capfd.readouterr() # remove can result in error message - clear
+    capfd.readouterr()  # remove can result in error message - clear
 
     id, package_folder = conan_api.get_path_with_auto_install(ConanRef.loads(ref))
     assert (package_folder / "bin").is_dir()
@@ -76,17 +86,21 @@ def test_install_compiler_no_settings(conan_api: ConanBaseUnifiedApi, capfd):
     conan_remove_ref(ref)
 
 
-
 def test_conan_get_conan_buildinfo(conan_api: ConanBaseUnifiedApi):
     """
-    Check, that get_conan_buildinfo actually retrieves as a string for the linux pkg 
+    Check, that get_conan_buildinfo actually retrieves as a string for the linux pkg
     This exectues an install under the hood, thus the category
     """
-    if conan_version.major == 2: # not implemented yet
+    if conan_version.major == 2:  # not implemented yet
         return
-    LINUX_X64_GCC9_SETTINGS = {'os': 'Linux', 'arch': 'x86_64', 'compiler': 'gcc',
-                               "compiler.libcxx": "libstdc++11", 'compiler.version': '9', 'build_type': 'Release'}
-    buildinfo = conan_api.get_conan_buildinfo(
-        ConanRef.loads(TEST_REF), LINUX_X64_GCC9_SETTINGS)
+    LINUX_X64_GCC9_SETTINGS = {
+        "os": "Linux",
+        "arch": "x86_64",
+        "compiler": "gcc",
+        "compiler.libcxx": "libstdc++11",
+        "compiler.version": "9",
+        "build_type": "Release",
+    }
+    buildinfo = conan_api.get_conan_buildinfo(ConanRef.loads(TEST_REF), LINUX_X64_GCC9_SETTINGS)
     assert "USER_example" in buildinfo
     assert "ENV_example" in buildinfo

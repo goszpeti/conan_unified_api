@@ -1,19 +1,22 @@
-
 """
 This module is for conan cli command wrappers, which are used for the testcases,
 where we don't want to use the conan_unified_api methods for setting up the testcases.
 """
+
 import os
 import platform
 import subprocess
+
 from conan_unified_api import conan_version
 from conan_unified_api.types import ConanRef
-from . import TEST_REMOTE_NAME, PathSetup, is_ci_job, conan_api
+
+from . import TEST_REMOTE_NAME, PathSetup, conan_api, is_ci_job
 
 # TESTED feature switches - after these switches are set true,
 # the cli functions will switch to the much faster internal methods
-TESTED_ADD_REMOVE_REMOTE = False #not is_ci_job()
-TESTED_DISABLE_REMOTE = False # not is_ci_job()
+TESTED_ADD_REMOVE_REMOTE = False  # not is_ci_job()
+TESTED_DISABLE_REMOTE = False  # not is_ci_job()
+
 
 def conan_install_ref(ref, args="", profile=None):
     paths = PathSetup()
@@ -38,10 +41,12 @@ def conan_remove_ref(ref):
 
 def conan_add_editables(conanfile_path: str, reference: ConanRef):  # , path: str
     if conan_version.major == 2:
-        os.system(f"conan editable add --version {reference.version} "
-                  f"--channel {reference.channel} --user {reference.user}  {conanfile_path}")
+        os.system(
+            f"conan editable add --version {reference.version} "
+            f"--channel {reference.channel} --user {reference.user}  {conanfile_path}"
+        )
     else:
-        os.system(f"conan editable add {conanfile_path} {str(reference)}")
+        os.system(f"conan editable add {conanfile_path} {reference!s}")
 
 
 def conan_create(conanfile: str, ref: str, create_params=""):
@@ -56,7 +61,8 @@ def conan_create(conanfile: str, ref: str, create_params=""):
         if cfr.channel:
             extra_args += f"--channel={cfr.channel} "
         os.system(
-            f"conan create {conanfile} --name={cfr.name} --version={cfr.version} {extra_args} {create_params}")
+            f"conan create {conanfile} --name={cfr.name} --version={cfr.version} {extra_args} {create_params}"
+        )
 
 
 def conan_upload(ref: str):
@@ -65,11 +71,12 @@ def conan_upload(ref: str):
     elif conan_version.major == 2:
         os.system(f"conan upload {ref} -r {TEST_REMOTE_NAME} --force")
 
+
 def add_remote(remote_name, url):
     if TESTED_ADD_REMOVE_REMOTE:
         try:
-            conan_api.add_remote(remote_name, url, False) # only local remotes
-        except Exception as e: # already added
+            conan_api.add_remote(remote_name, url, False)  # only local remotes
+        except Exception:  # already added
             pass
         return
     if conan_version.major == 1:
@@ -83,6 +90,7 @@ def disable_remote(remote_name):
         conan_api.disable_remote(remote_name, True)
     os.system(f"conan remote disable {remote_name}")
 
+
 def get_remote_list():
     ret = subprocess.check_output("conan remote list").decode()
     lines = ret.split("\n")
@@ -90,6 +98,7 @@ def get_remote_list():
     for line in lines:
         remote_list.append(line.split(" ")[0].rstrip(":"))
     return remote_list
+
 
 def remove_remote(remote_name):
     if TESTED_ADD_REMOVE_REMOTE:
@@ -140,20 +149,24 @@ def get_current_profile():
 
 
 def add_editable(ref, path, output_path=None):
-
     if conan_version.major == 1:
-        add_cmd = f"conan editable add {str(path)} {ref}"
+        add_cmd = f"conan editable add {path!s} {ref}"
     else:
         conan_ref = ConanRef.loads(ref)
-        add_cmd = (f"conan editable add {str(path)} --name {conan_ref.name} --version {conan_ref.version} "
-                   f" --channel {conan_ref.channel} --user {conan_ref.user}")
-    if output_path: # ok for both
+        add_cmd = (
+            f"conan editable add {path!s} --name {conan_ref.name} --version {conan_ref.version} "
+            f" --channel {conan_ref.channel} --user {conan_ref.user}"
+        )
+    if output_path:  # ok for both
         add_cmd += " -of " + str(output_path)
 
     os.system(add_cmd)
 
+
 def remove_editable(ref):
     if conan_version.major == 1:
         os.system(f"conan editable remove {ref}")
+    else:
+        os.system(f"conan editable remove -r {ref}")
     else:
         os.system(f"conan editable remove -r {ref}")

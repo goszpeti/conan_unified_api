@@ -1,16 +1,15 @@
 import os
 import tempfile
 from pathlib import Path
-
-
-from conan_unified_api.base.helper import (create_key_value_pair_list, delete_path)
-from conan_unified_api.unified_api import ConanBaseUnifiedApi
-from conan_unified_api.common import ConanUnifiedApi
 from test import TEST_REF_OFFICIAL
+
+from conan_unified_api.base.helper import create_key_value_pair_list, delete_path
+from conan_unified_api.common import ConanUnifiedApi
+from conan_unified_api.unified_api import ConanBaseUnifiedApi
 
 
 def test_delete():
-    """ 
+    """
     1. Delete file
     2. Delete non-empty directory
     """
@@ -47,6 +46,7 @@ def test_create_key_value_list():
     inp = {"Key1": "Value1", "Key2": "Any"}
     res = create_key_value_pair_list(inp)
     assert res == ["Key1=Value1"]
+
 
 def test_generate_canonical_ref(conan_api: ConanBaseUnifiedApi):
     ref = conan_api.generate_canonical_ref(TEST_REF_OFFICIAL.split("@")[0])
