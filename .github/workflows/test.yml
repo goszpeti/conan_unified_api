@@ -29,11 +29,14 @@ jobs:
             "ubuntu22-py310-conan1",
             "ubuntu22-py311-conan1",
             "ubuntu22-py312-conan1",
-            "windows-py311-conan1",
+            "ubuntu22-py313-conan1",
+            "windows-py313-conan1",
             # conan 2 stuff - for Python 3.12 (U22 needed)
             "ubuntu22-py310-conan2",
+            "ubuntu22-py311-conan2",
             "ubuntu22-py312-conan2",
-            "windows-py312-conan2",
+            "ubuntu22-py313-conan2",
+            "windows-py313-conan2",
           ]
         include:
           - name: "ubuntu22-py38-conan1"
@@ -56,8 +59,12 @@ jobs:
             python: "3.10"
             conan: "1"
             os: ubuntu-22.04
-          - name: "windows-py311-conan1"
-            python: "3.11"
+          - name: "ubuntu22-py313-conan1"
+            python: "3.13"
+            conan: "1"
+            os: ubuntu-22.04
+          - name: "windows-py313-conan1"
+            python: "3.13"
             os: windows-latest
             conan: "1"
 
@@ -65,12 +72,20 @@ jobs:
             python: "3.10"
             os: ubuntu-22.04
             conan: "2"
+          - name: "ubuntu22-py311-conan2"
+            python: "3.11"
+            os: ubuntu-22.04
+            conan: "2"
           - name: "ubuntu22-py312-conan2"
             python: "3.12"
             os: ubuntu-22.04
             conan: "2"
-          - name:  windows-py312-conan2
-            python: "3.12"
+          - name: "ubuntu22-py313-conan2"
+            python: "3.13"
+            os: ubuntu-22.04
+            conan: "2"
+          - name:  windows-py313-conan2
+            python: "3.13"
             os: windows-latest
             conan: "2"
     env:
