@@ -73,11 +73,11 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
         else:
             from conan.internal.cache.cache import PkgCache as ClientCache
 
-            if conan_version < Version("2.20"):
-                global_conf = self._conan.config.global_conf
-            else:
-                global_conf = self._conan._api_helpers.global_conf
-            self._client_cache = ClientCache(self._conan.cache_folder, global_conf)
+        if conan_version < Version("2.20"):
+            global_conf = self._conan.config.global_conf
+        else:
+            global_conf = self._conan._api_helpers.global_conf
+        self._client_cache = ClientCache(self._conan.cache_folder, global_conf)
         from conan.internal.cache.home_paths import HomePaths
 
         self._home_paths = HomePaths(self._conan.cache_folder)
