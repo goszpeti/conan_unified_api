@@ -40,7 +40,7 @@ test = [
     "pytest==8.3.5", # newer versions uncompatible to U22, upgrade later
     "pytest-cov==5.0.0", # newer versions uncompatible to U22, upgrade later
     "pytest-mock==3.14.1",
-    "pytest-check==2.5.3",
+    "pytest-check==2.4.2", # newer versions uncompatible to U22, upgrade later
 ]
 
 [tool.ruff]
