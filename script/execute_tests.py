@@ -9,7 +9,7 @@ from pathlib import Path
 conan_major = 1
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--conan_major_version", type=str, default="1")
+parser.add_argument("--conan_major_version", type=str, default="2")
 
 args = parser.parse_args()
 conan_major = args.conan_major_version
@@ -31,9 +31,12 @@ for dep in deps:
 for minor in range(1, minor_version_max + 1):
     versions_2.append(f"~=2.{minor}.0")
 test_versions = {
-    "1": ["==1.48.0", "==1.59.0", "<2"],
+    "1": ["<2"],
     "2": versions_2,
 }
+# only add "==1.48.0", "==1.59.0" to 1 if python version is lower or equal 3.11 (otherwise we get import errors)
+if sys.version_info[0:2] <= (3, 11):
+    test_versions["1"].extend(["==1.48.0", "==1.59.0"])
 
 # compatbility
 ci_name = platform.system() + "_Py" + "_".join(map(str, sys.version_info[0:2]))

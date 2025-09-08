@@ -119,12 +119,3 @@ def test_get_remote_pkg_from_id(conan_api: ConanBaseUnifiedApi, ref: str):
     assert pkg[0] == conan_api.get_remote_pkg_from_id(
         ConanPkgRef.loads(ref + ":" + pkg[0].get("id", ""))
     )
-
-
-def test_get_remote_pkg_from_id(conan_api: ConanBaseUnifiedApi, ref: str):
-    """Test finding the ConanPkg from the ConanPkgRef"""
-    pkg, _ = conan_api.find_best_matching_package_in_remotes(ref)
-    assert len(pkg) >= 1
-    assert pkg[0] == conan_api.get_remote_pkg_from_id(
-        ConanPkgRef.loads(ref + ":" + pkg[0].get("id", ""))
-    )
