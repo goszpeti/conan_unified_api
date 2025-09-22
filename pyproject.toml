@@ -37,7 +37,7 @@ dev = [
 
 test = [
     "legacy-cgi; python_version>='3.13'", # for conan 1 compatibility
-    "psutil==7.0.0",
+    "psutil==7.1.0",
     "pytest==8.3.5", # newer versions uncompatible to U22, upgrade later
     "pytest-cov==5.0.0", # newer versions uncompatible to U22, upgrade later
     "pytest-mock==3.14.1",
