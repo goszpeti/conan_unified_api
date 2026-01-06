@@ -26,8 +26,13 @@ else:
         from conans.model.package_ref import PkgReference
         from conans.model.recipe_ref import RecipeReference as ConanFileRef
     except ImportError:  # try again for versions where the import has a circular dependency
-        from conans.model.package_ref import PkgReference
-        from conans.model.recipe_ref import RecipeReference as ConanFileRef
+        try:
+            from conans.model.package_ref import PkgReference
+            from conans.model.recipe_ref import RecipeReference as ConanFileRef
+        except ImportError:  # from conan version 2.20?
+            from conan.api.model import PkgReference
+            from conan.api.model import RecipeReference as ConanFileRef
+
     try:
         from conan.errors import ConanException
     except ImportError:  # until conan version 2.?

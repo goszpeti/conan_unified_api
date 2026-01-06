@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "conan-unified-api"
 authors = [{name = "Péter Gosztolya and Contributors"}]
-version = "2.20.0" # version corresponds to the last supported conan version
-requires-python = ">=3.8"
-description = "Compatibility layer for Conan 1 and 2 for Python 3.8+"
+version = "2.24.0" # version corresponds to the last supported conan version
+requires-python = ">=3.9, <3.15"
+description = "Compatibility layer for Conan 1 and 2 for Python 3.9+"
 readme = "README.md"
 keywords = ["conan", "api"]
 license = {file = "LICENSE"}
@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython"]
 dependencies = [
-    "conan>=1.48, <2.21",
+    "conan>=1.48, <2.25",
     # compatibility
     'contextlib-chdir==1.0.2; python_version<"3.11"',  # BSD License (BSD-3-Clause)
     'typing-extensions>=3.10.0.2, <5',  # Python Software Foundation License(PSF)
@@ -37,10 +37,10 @@ dev = [
 
 test = [
     "legacy-cgi; python_version>='3.13'", # for conan 1 compatibility
-    "psutil==7.0.0",
+    "psutil==7.2.1",
     "pytest==8.3.5", # newer versions uncompatible to U22, upgrade later
     "pytest-cov==5.0.0", # newer versions uncompatible to U22, upgrade later
-    "pytest-mock==3.14.1",
+    "pytest-mock==3.15.1",
     "pytest-check==2.4.2", # newer versions uncompatible to U22, upgrade later
 ]
 
