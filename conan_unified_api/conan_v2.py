@@ -606,7 +606,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
 
                     raw_results = self._conan.list.select(ListPattern(query), remote=remote)
                     # cast every result to ConanRef
-                    if conan_version <= Version("2.20"):
+                    if conan_version < Version("2.21"):
                         search_results = [
                             ConanRef.loads(ref) for ref in raw_results.recipes.keys()
                         ]
@@ -657,7 +657,7 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
             if search_results:
                 latest_rev = self._conan.list.latest_recipe_revision(conan_ref, remote_obj)
                 if latest_rev:
-                    if conan_version <= Version("2.20"):
+                    if conan_version < Version("2.21"):
                         found_pkgs_dict = (
                             search_results.recipes.get(str(conan_ref), {})
                             .get("revisions", {})
