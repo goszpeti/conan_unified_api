@@ -606,7 +606,12 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
 
                     raw_results = self._conan.list.select(ListPattern(query), remote=remote)
                     # cast every result to ConanRef
-                    search_results = [ConanRef.loads(ref) for ref in raw_results.recipes.keys()]
+                    if conan_version <= Version("2.20"):
+                        search_results = [
+                            ConanRef.loads(ref) for ref in raw_results.recipes.keys()
+                        ]
+                    else:
+                        search_results = [ConanRef.loads(ref) for ref in raw_results._data]
             except Exception as e:
                 Logger().error(f"Error while searching for recipe: {e!s}")
 
@@ -645,28 +650,42 @@ class ConanApi(ConanUnifiedApi, metaclass=SignatureCheckMeta):
                 for remote_obj in self.get_remotes():
                     if remote_obj.name == remote_name:
                         break
+
             search_results = self._conan.list.select(
                 pattern, remote=remote_obj, package_query=query
             )
             if search_results:
                 latest_rev = self._conan.list.latest_recipe_revision(conan_ref, remote_obj)
                 if latest_rev:
-                    found_pkgs_dict = (
-                        search_results.recipes.get(str(conan_ref), {})
-                        .get("revisions", {})
-                        .get(latest_rev.revision, {})
-                        .get("packages", {})
-                    )
-                    for id, info in found_pkgs_dict.items():
-                        found_pkgs.append(
-                            ConanPkg(
-                                id=id,
-                                options=info.get("info", {}).get("options", {}),
-                                settings=info.get("info", {}).get("settings", {}),
-                                requires=[],
-                                outdated=False,
-                            )
+                    if conan_version <= Version("2.20"):
+                        found_pkgs_dict = (
+                            search_results.recipes.get(str(conan_ref), {})
+                            .get("revisions", {})
+                            .get(latest_rev.revision, {})
+                            .get("packages", {})
                         )
+                        for _id, info in found_pkgs_dict.items():
+                            found_pkgs.append(
+                                ConanPkg(
+                                    id=_id,
+                                    options=info.get("info", {}).get("options", {}),
+                                    settings=info.get("info", {}).get("settings", {}),
+                                    requires=[],
+                                    outdated=False,
+                                )
+                            )
+                    else:
+                        found_pkgs_dict = search_results.refs().get(latest_rev, {})
+                        for _id, info in found_pkgs_dict.get("packages", {}).items():
+                            found_pkgs.append(
+                                ConanPkg(
+                                    id=_id,
+                                    options=info.get("info", {}).get("options", {}),
+                                    settings=info.get("info", {}).get("settings", {}),
+                                    requires=[],
+                                    outdated=False,
+                                )
+                            )
             Logger().debug(str(found_pkgs))
         except ConanException as e:
             error_message = f"Can not get Conan packages for reference {conan_ref}: {e!s}"
