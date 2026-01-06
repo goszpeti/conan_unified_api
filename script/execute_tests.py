@@ -28,8 +28,12 @@ for dep in deps:
         if int(dep.split("<")[1].split(".")[1]) - 1 != minor_version_max:
             raise Exception("Minor version of project is not conan version")
 
-for minor in range(1, minor_version_max + 1):
-    versions_2.append(f"~=2.{minor}.0")
+if platform.system() == "Windows":
+    # only test oldest and newest conan 2 version on windows to reduce test time
+    versions_2.append(f"~=2.{minor_version_max}.0")
+else:
+    for minor in range(1, minor_version_max + 1):
+        versions_2.append(f"~=2.{minor}.0")
 test_versions = {
     "1": ["<2"],
     "2": versions_2,
@@ -38,7 +42,7 @@ test_versions = {
 if sys.version_info[0:2] <= (3, 11):
     test_versions["1"].extend(["==1.48.0", "==1.59.0"])
 
-# compatbility
+# compatibility
 ci_name = platform.system() + "_Py" + "_".join(map(str, sys.version_info[0:2]))
 for conan_version in test_versions[conan_major]:
     subprocess.run(
